@@ -12,6 +12,12 @@ export class EmpleadosController {
     return this.empleadosService.create(createEmpleadoDto);
   }
 
+  @Post()
+  saveEmloyeeCtrl(@Body() crearEmpleadoDto: any) {
+    console.log(crearEmpleadoDto);
+    return crearEmpleadoDto //this.empeladoService.saveEmployee(crearEmpleadoDto);
+  }
+
   @Get()
   findAll() {
     return this.empleadosService.findAll();
