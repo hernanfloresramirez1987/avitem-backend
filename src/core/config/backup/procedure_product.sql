@@ -46,7 +46,7 @@ BEGIN
             START TRANSACTION;
 
             -- Insertar el producto
-            INSERT INTO producto (nombre,descripcion,cantidadStock,fechaIngreso,unidadMedida,codigoProducto,idProveedor,idCategoria,state)
+            INSERT INTO producto (nombre,descripcion,cantidadStock,fechaIngreso,unidadMedida,codigoProducto,id_proveedor,id_categoria,state)
             VALUES (p_nombre,p_descripcion,p_cantidadStock,p_fechaIngreso,p_unidadMedida,p_codigoProducto,p_idProveedor,p_idCategoria,p_state);
 
             -- Verificar si la inserción fue exitosa

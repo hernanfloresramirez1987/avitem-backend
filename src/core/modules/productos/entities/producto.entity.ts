@@ -28,14 +28,16 @@ export class Productos extends BaseEntity {
   @Column({ type: 'varchar', length: 50, unique: true })
   codigoProducto: string;
 
-  @Column({ type: 'bigint', nullable: true })
-  idProveedor: number;
-
-  @Column({ type: 'bigint', nullable: true })
-  idCategoria: number;
-
   @Column({ type: 'int' })
   state: number;
+
+  @ManyToOne(() => Proveedores, { nullable: true })
+  @JoinColumn({ name: 'id_proveedor' })
+  proveedor: Proveedores | null;
+
+  @ManyToOne(() => Categorias, { nullable: true })
+  @JoinColumn({ name: 'id_categoria' })
+  categoria: Categorias | null;
 
   @OneToMany(() => ComboProductos, (comboProducto) => comboProducto.producto)
   comboProductos: ComboProductos[];
