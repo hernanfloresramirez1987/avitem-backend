@@ -23,7 +23,7 @@ BEGIN
     START TRANSACTION;
 
     -- Inserción de la compra
-    INSERT INTO compra (idProveedor, fechaCompra, montoTotal)
+    INSERT INTO compra (id_proveedor, fechaCompra, total)
     VALUES (p_idProveedor, p_fechaCompra, p_montoTotal);
 
     -- Obtener el último id insertado (id de la compra)

@@ -43,16 +43,17 @@ BEGIN
     ELSE
         START TRANSACTION;
 
-         -- Verificar si ya existe una persona con el CI proporcionado
-        SELECT id INTO v_id_persona FROM persona WHERE ci = p_ci;
+        -- Insertar persona
+        INSERT INTO persona (
+            ci, ciExpedit, ciComplement, nombre, app, apm, 
+            sexo, fnaci, direccion, telefono, email, state
+        )
+        VALUES (
+            p_ci, p_ciExpedit, p_ciComplement, p_nombre, p_app, p_apm,
+            p_sexo, p_fnaci, p_direccion, p_telefono, p_email, 1
+        );
 
-        -- Si no existe, insertar la persona
-        IF v_id_persona IS NULL THEN
-            -- Insertar persona
-            INSERT INTO persona (ci, ciExpedit, ciComplement, nombre, app, apm, sexo, fnaci, direccion, telefono, email, state)
-            VALUES (p_ci, p_ciExpedit, p_ciComplement, p_nombre, p_app, p_apm, p_sexo, p_fnaci, p_direccion, p_telefono, p_email, 1);
-            SET v_id_persona = LAST_INSERT_ID();
-        END IF;
+        SET v_id_persona = LAST_INSERT_ID();
 
         -- Insertar empleado
         INSERT INTO empleado (idtipo, idcargo, salario, fing, idper)
