@@ -78,3 +78,45 @@ BEGIN
 END //
 
 DELIMITER ;
+
+
+
+
+
+
+
+
+
+-- 
+CALL registro_persona_empleado(
+    -- Datos de usuario 3
+    'juan.perez',                    -- username
+    '$2a$10$xxxxxxxxxxx',            -- password hash (ejemplo de hash bcrypt)
+    'user',                          -- rol (admin/user/guest)
+    
+    -- Datos de persona 11
+    '123456',                        -- CI
+    'LP',                           -- Expedido en (LP, SC, CB, etc.)
+    0,                              -- Complemento CI
+    'Juan',                         -- Nombre
+    'Perez',                        -- Apellido paterno
+    'Gomez',                        -- Apellido materno
+    'M',                            -- Sexo (M/F)
+    '1990-01-01',                   -- Fecha nacimiento
+    'Av. 6 de Agosto #123',         -- Dirección
+    '71234567',                     -- Teléfono
+    'juan.perez@email.com',         -- Email
+    
+    -- Datos de empleado 4
+    1,                              -- idtipo (ID del tipo de empleado)
+    2,                              -- idcargo (ID del cargo)
+    '2024-01-15',                   -- Fecha de ingreso
+    3500,                           -- Salario
+    
+    -- Variables de salida 2
+    @resultado,                     -- Variable para el mensaje de resultado
+    @status                         -- Variable para el código de estado
+);
+
+-- Verificar el resultado
+SELECT @resultado AS Mensaje, @status AS CodigoEstado;
