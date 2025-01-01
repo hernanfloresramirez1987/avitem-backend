@@ -7,12 +7,17 @@ import { UpdateProveedoreDto } from './dto/update-proveedore.dto';
 export class ProveedoresController {
   constructor(private readonly proveedoresService: ProveedoresService) {}
 
-  @Post()
+  @Post('create')
   create(@Body() createProveedoreDto: CreateProveedoreDto) {
     return this.proveedoresService.create(createProveedoreDto);
   }
 
-  @Get()
+  @Post('register')
+  saveEmp(@Body() createProveedorDto: any) {
+    return this.proveedoresService.saveProveedor(createProveedorDto);
+  }
+
+  @Post('list')
   findAll() {
     return this.proveedoresService.findAll();
   }

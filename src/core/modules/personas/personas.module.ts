@@ -6,17 +6,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PersonaRepository } from '../../shared/repositories/PersonaRep';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Personas]), // Importa la entidad
-  ],
-  providers: [
-    PersonasService, 
-    PersonaRepository, // Registra el repositorio como proveedor
-  ],
+  imports: [TypeOrmModule.forFeature([Personas])],
+  providers: [PersonasService, PersonaRepository],
   controllers: [PersonasController],
-  exports: [
-    PersonasService, 
-    PersonaRepository, // Exporta si es necesario en otros módulos
-  ],
 })
 export class PersonasModule {}
