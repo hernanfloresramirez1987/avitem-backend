@@ -7,7 +7,7 @@ import { PersonaRepository } from '../../shared/repositories/PersonaRep';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Personas])],
-  providers: [PersonasService, PersonaRepository],
   controllers: [PersonasController],
+  providers: [PersonasService, PersonaRepository],
 })
 export class PersonasModule {}
