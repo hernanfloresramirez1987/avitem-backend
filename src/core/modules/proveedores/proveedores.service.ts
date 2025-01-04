@@ -51,10 +51,10 @@ export class ProveedoresService {
     // Formatea los datos según lo solicitado:
     const result = empleados.map(proveedor => ({
       id: proveedor.id,
-      idtipo: proveedor.empresa,
-      idcargo: proveedor.nit,
-      salario: proveedor.telefonoEmpresa,
-      fing: proveedor.direccionEmpresa,
+      empresa: proveedor.empresa,
+      nit: proveedor.nit,
+      telefonoEmpresa: proveedor.telefonoEmpresa,
+      direccionEmpresa: proveedor.direccionEmpresa,
       ci: proveedor.persona.ci,
       ciExpedit: proveedor.persona.ciExpedit,
       nombre: proveedor.persona.nombre,
