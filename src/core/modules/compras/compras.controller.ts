@@ -12,6 +12,11 @@ export class ComprasController {
     return this.comprasService.create(createCompraDto);
   }
 
+  @Post('register')
+  saveEmp(@Body() createCompraDto: any) {
+    return this.comprasService.saveCompra(createCompraDto);
+  }
+
   @Get()
   findAll() {
     return this.comprasService.findAll();

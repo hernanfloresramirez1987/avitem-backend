@@ -12,7 +12,7 @@ export class ProductosService {
     @InjectRepository(Productos)
     private personaRepository: ProductoRepository,
     private readonly connection: Connection
-  ) {}  
+  ) {}
   create(createProductoDto: CreateProductoDto) {
     return 'This action adds a new producto';
   }
@@ -42,8 +42,49 @@ export class ProductosService {
     }
   }
 
-  findAll() {
-    return `This action returns all productos`;
+
+  async findAllOneProveedor(idProveedor: number) {
+    console.log("ppppp| \n", idProveedor);
+    const productos = await this.personaRepository.find({
+      where: { proveedor: { id: idProveedor } },
+      relations: ['proveedor'] 
+    });
+    
+    const result = productos.map(producto => ({
+      id: producto.id,
+      nombre: producto.nombre,
+      descripcion: producto.descripcion,
+      cantidadStock: producto.cantidadStock,
+      fechaIngreso: producto.fechaIngreso,
+      unidadMedida: producto.unidadMedida,
+      codigoProducto: producto.codigoProducto,
+      id_proveedor: producto.proveedor.id,
+      empresa: producto.proveedor.empresa,
+      nit: producto.proveedor.nit
+    }));
+  
+    return result;
+  }
+
+  async findAll() {
+    const productos = await this.personaRepository.find({ 
+      relations: ['proveedor'] 
+    });
+    
+    const result = productos.map(producto => ({
+      id: producto.id,
+      nombre: producto.nombre,
+      descripcion: producto.descripcion,
+      cantidadStock: producto.cantidadStock,
+      fechaIngreso: producto.fechaIngreso,
+      unidadMedida: producto.unidadMedida,
+      codigoProducto: producto.codigoProducto,
+      id_proveedor: producto.proveedor.id,
+      empresa: producto.proveedor.empresa,
+      nit: producto.proveedor.nit
+    }));
+  
+    return result;
   }
 
   findOne(id: number) {

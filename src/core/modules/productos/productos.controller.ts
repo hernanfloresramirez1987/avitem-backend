@@ -17,6 +17,11 @@ export class ProductosController {
     return this.productosService.saveProducto(createProductoDto);
   }
 
+  @Get('list/:idProv')
+  findAllOneProveedor(@Param('idProv') idProv: number) {
+    return this.productosService.findAllOneProveedor(idProv);
+  }
+
   @Get()
   findAll() {
     return this.productosService.findAll();
