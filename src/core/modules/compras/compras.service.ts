@@ -26,9 +26,9 @@ export class ComprasService {
       .join(',');
 
     // Procedimiento almacenado con los valores
-    const procedureStore = `CALL registro_Compra_y_Detalle(${values}, @resultado, @status);`;
+    const procedureStore = `CALL registro_Compra_y_Detalle_mas_Lote_update_Product(${values}, @resultado, @status);`;
 
-    console.log("CALL registro_Compra_y_Detalle($: \n", procedureStore, "\n\n");
+    console.log("CALL registro_Compra_y_Detalle_mas_Lote_update_Product($: \n", procedureStore, "\n\n");
     
     try {
       // Ejecutar la consulta en la base de datos
