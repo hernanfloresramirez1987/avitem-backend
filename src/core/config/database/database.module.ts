@@ -11,6 +11,7 @@ import { DetalleCompras } from 'src/core/modules/detalle_compras/entities/detall
 import { DetalleVentas } from 'src/core/modules/detalle_ventas/entities/detalle_venta.entity';
 import { Empleados } from 'src/core/modules/empleados/entities/empleado.entity';
 import { Inventarios } from 'src/core/modules/inventarios/entities/inventario.entity';
+import { LoteProductos } from 'src/core/modules/lote_producto/entities/lote_producto.entity';
 import { MaterialServicios } from 'src/core/modules/material_servicios/entities/material_servicio.entity';
 import { OrdenServicios } from 'src/core/modules/orden_servicios/entities/orden_servicio.entity';
 import { Personas } from 'src/core/modules/personas/entities/persona.entity';
@@ -58,6 +59,7 @@ import { Ventas } from 'src/core/modules/ventas/entities/venta.entity';
               Clientes,
               Categorias,
               Productos,
+              LoteProductos,
               Almacenes,
               Inventarios,
               Compras,

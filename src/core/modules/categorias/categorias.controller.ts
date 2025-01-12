@@ -17,6 +17,11 @@ export class CategoriasController {
     return this.categoriasService.findAll();
   }
 
+  @Get('searchID/:id')
+  findOneId(@Param('id') id: number) {
+    return this.categoriasService.findOneID(+id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.categoriasService.findOne(+id);

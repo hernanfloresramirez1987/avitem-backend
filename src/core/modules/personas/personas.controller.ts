@@ -14,10 +14,11 @@ export class PersonasController {
     return this.personasService.create(createPersonaDto);
   }
 
-  // @Get()
-  // findAll() {
-  //   return this.personasService.findAll();
-  // }
+  @Get('searchCI/:ci')
+  findOneCI(@Param('ci') ci: number) {
+    return this.personasService.findOneCI(ci);
+  }
+
   @Get()
   async findAll(): Promise<Personas[]> {
     return this.personasService.getAll(); // Devuelve todas las personas

@@ -7,15 +7,25 @@ import { UpdateEmpleadoDto } from './dto/update-empleado.dto';
 export class EmpleadosController {
   constructor(private readonly empleadosService: EmpleadosService) {}
 
-  @Post()
+  @Post('create')
   create(@Body() createEmpleadoDto: CreateEmpleadoDto) {
     return this.empleadosService.create(createEmpleadoDto);
   }
 
-  @Get()
+  @Post('register')
+  saveEmp(@Body() createEmpleadoDto: any) {
+    return this.empleadosService.saveEmployee(createEmpleadoDto);
+  }
+
+  @Post('list')
   findAll() {
     return this.empleadosService.findAll();
   }
+
+  // @Get()
+  // findAll() {
+  //   return this.empleadosService.findAll();
+  // }
 
   @Get(':id')
   findOne(@Param('id') id: number) {

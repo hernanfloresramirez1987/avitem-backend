@@ -1,9 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, BaseEntity } from 'typeorm';
 import { Servicios } from '../../servicios/entities/servicio.entity';
 import { Productos } from '../../productos/entities/producto.entity';
 
 @Entity('materiales_servicio')
-export class MaterialServicios {
+export class MaterialServicios extends BaseEntity {
   @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
   id: number;
 

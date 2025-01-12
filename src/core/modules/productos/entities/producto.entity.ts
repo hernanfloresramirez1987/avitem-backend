@@ -3,35 +3,33 @@ import { Proveedores } from '../../proveedores/entities/proveedore.entity';
 import { Categorias } from '../../categorias/entities/categoria.entity';
 import { ComboProductos } from '../../combo_productos/entities/combo_producto.entity';
 import { MaterialServicios } from '../../material_servicios/entities/material_servicio.entity';
+import { LoteProductos } from '../../lote_producto/entities/lote_producto.entity';
   
 @Entity('producto')
 export class Productos extends BaseEntity {
-  @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
+  @PrimaryGeneratedColumn('increment')
   id: number;
 
-  @Column({ type: 'varchar', length: 100, nullable: false })
+  @Column({ type: 'varchar', length: 100 })
   nombre: string;
 
-  @Column({ type: 'text', nullable: true })
-  descripcion: string | null;
+  @Column('text', { nullable: true })
+  descripcion: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false })
-  precio: number;
-
-  @Column({ type: 'int', nullable: false })
+  @Column({ type: 'int' })
   cantidadStock: number;
 
-  @Column({ type: 'date', nullable: true })
-  fechaIngreso: Date | null;
+  @Column('date', { nullable: true })
+  fechaIngreso: string;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  unidadMedida: string | null;
+  unidadMedida: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  precioUnitario: number | null;
+  @Column({ type: 'varchar', length: 50, unique: true })
+  codigoProducto: string;
 
-  @Column({ type: 'varchar', length: 50, nullable: true, unique: true })
-  codigoProducto: string | null;
+  @Column({ type: 'int' })
+  state: number;
 
   @ManyToOne(() => Proveedores, { nullable: true })
   @JoinColumn({ name: 'id_proveedor' })
@@ -46,4 +44,7 @@ export class Productos extends BaseEntity {
 
   @OneToMany(() => MaterialServicios, (materialServicio) => materialServicio.producto)
   materialesServicio: MaterialServicios[];
+
+  @OneToMany(() => LoteProductos, (loteProducto) => loteProducto.producto)
+  loteProductos: LoteProductos[];
 }

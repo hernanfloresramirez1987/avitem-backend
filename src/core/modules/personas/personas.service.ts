@@ -18,10 +18,10 @@ export class PersonasService {
   async getAll(): Promise<Personas[]> {
     return await this.personaRepository.find();
   }
-  // findAll() {
-  //   // return `This action returns all personas`;
-  //   return this.find({ where: { state: true } });
-  // }
+  
+  async findOneCI(cidto: number) {
+    return await this.personaRepository.find({ where: { ci: cidto.toString() } });
+  }
 
   findOne(id: number) {
     return `This action returns a #${id} persona`;
