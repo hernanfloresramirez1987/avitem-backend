@@ -14,9 +14,6 @@ export class LoteProductos extends BaseEntity {
   
     @Column({ type: 'int' })
     cantidadReabastecida: number;
-
-    @Column({ type: 'int' })
-    cantidadDespachada: number;
   
     @Column({ type: 'date', nullable: true })
     fechaVencimiento: string;
