@@ -46,5 +46,5 @@ export class Productos extends BaseEntity {
   materialesServicio: MaterialServicios[];
 
   @OneToMany(() => LoteProductos, (loteProducto) => loteProducto.producto)
-  loteProductos: LoteProductos[];
+  loteProductos: LoteProductos;
 }

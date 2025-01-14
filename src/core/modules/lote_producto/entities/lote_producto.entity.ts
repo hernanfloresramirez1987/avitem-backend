@@ -26,5 +26,5 @@ export class LoteProductos extends BaseEntity {
   
     @ManyToOne(() => Productos, (producto) => producto.loteProductos)
     @JoinColumn({ name: 'id_producto' })
-    producto: Productos;
+    producto: Productos[];
 }

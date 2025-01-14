@@ -44,7 +44,6 @@ export class ProductosService {
 
 
   async findAllOneProveedor(idProveedor: number) {
-    console.log("ppppp| \n", idProveedor);
     const productos = await this.personaRepository.find({
       where: { proveedor: { id: idProveedor } },
       relations: ['proveedor'] 

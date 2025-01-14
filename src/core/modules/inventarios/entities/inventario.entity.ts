@@ -16,8 +16,23 @@ import { Almacenes } from '../../almacenes/entities/almacene.entity';
     almacen: Almacenes | null;
   
     @Column({ type: 'int', nullable: false })
+    idLote: number;
+
+    @Column({ type: 'int', nullable: false })
     cantidadStock: number;
+
+    @Column({ type: 'int', nullable: false })
+    cantidadReservada: number;
+
+    @Column({ type: 'int', nullable: false })
+    cantidadDespachada: number;
   
     @Column({ type: 'date', nullable: true })
     fechaInventario: Date | null;
+
+    @Column({ type: 'date', nullable: true })
+    fechaIngreso: Date | null;
+
+    @Column({ type: 'date', nullable: true })
+    fechaSalida: Date | null;
   }
