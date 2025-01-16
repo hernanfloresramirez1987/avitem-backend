@@ -45,8 +45,19 @@ export class ComprasService {
     }
   }
 
-  findAll() {
-    return `This action returns all compras`;
+  async findAll() {
+    const compras = await this.comprasRepository.find({ 
+      relations: ['proveedor', 'categoria'] 
+    });
+    
+    const result = compras.map(compras => ({
+      id: compras.id,
+      nombre: compras.fechaCompra,
+      descripcion: compras.total,
+      cantidadStock: compras.proveedor
+    }));
+  
+    return result;
   }
 
   findOne(id: number) {

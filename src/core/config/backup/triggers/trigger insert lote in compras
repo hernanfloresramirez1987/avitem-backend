@@ -1,0 +1,25 @@
+DELIMITER $$
+
+CREATE TRIGGER `tg_inventario_from_lote`
+AFTER INSERT ON `lote_producto`
+FOR EACH ROW
+BEGIN
+    -- Verificar si el producto del lote ya existe en la tabla inventario
+    IF EXISTS (SELECT 1 FROM `inventario` WHERE `id_producto` = NEW.id_producto) THEN
+        -- Si existe, actualizar la cantidad de stock y la fecha del último movimiento
+        UPDATE `inventario`
+        SET 
+            `cantidadStock` = `cantidadStock` + NEW.cantidadReabastecida,
+            `ultimoMovimiento` = NOW()
+        WHERE `id_producto` = NEW.id_producto;
+    ELSE
+        -- Si no existe, insertar un nuevo registro en inventario
+        INSERT INTO `inventario` (`cantidadStock`, `fechaInventario`, `id_producto`, `ultimoMovimiento`)
+        VALUES (NEW.cantidadReabastecida, CURDATE(), NEW.id_producto, NOW());
+    END IF;
+END$$
+
+DELIMITER ;
+
+CALL registro_Compra_y_Detalle_mas_Lote_update_Product('2025-01-14',450,1,'[{"cantidad":90,"precioUnitario":5,"precioVenta":10,"id_producto":15}]','2025-12-31', @resultado, @status);
+SELECT @resultado AS Resultado, @status AS Status;

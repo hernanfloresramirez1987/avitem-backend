@@ -67,7 +67,7 @@ export class ProductosService {
 
   async findAll() {
     const productos = await this.personaRepository.find({ 
-      relations: ['proveedor'] 
+      relations: ['proveedor', 'categoria'] 
     });
     
     const result = productos.map(producto => ({
@@ -80,7 +80,9 @@ export class ProductosService {
       codigoProducto: producto.codigoProducto,
       id_proveedor: producto.proveedor.id,
       empresa: producto.proveedor.empresa,
-      nit: producto.proveedor.nit
+      categoria: producto.categoria.nombre,
+      nit: producto.proveedor.nit,
+      state: producto.state,
     }));
   
     return result;
