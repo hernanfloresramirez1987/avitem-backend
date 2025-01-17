@@ -4,6 +4,7 @@ import { Categorias } from '../../categorias/entities/categoria.entity';
 import { ComboProductos } from '../../combo_productos/entities/combo_producto.entity';
 import { MaterialServicios } from '../../material_servicios/entities/material_servicio.entity';
 import { LoteProductos } from '../../lote_producto/entities/lote_producto.entity';
+import { Colores } from '../../colores/entities/color.entity';
   
 @Entity('producto')
 export class Productos extends BaseEntity {
@@ -47,4 +48,8 @@ export class Productos extends BaseEntity {
 
   @OneToMany(() => LoteProductos, (loteProducto) => loteProducto.producto)
   loteProductos: LoteProductos;
+
+  @ManyToOne(() => Colores, { nullable: true })
+  @JoinColumn({ name: 'id_color' })
+  color: Colores | null;
 }

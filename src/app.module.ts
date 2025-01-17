@@ -27,6 +27,7 @@ import { OrdenServiciosModule } from './core/modules/orden_servicios/orden_servi
 import { MaterialServiciosModule } from './core/modules/material_servicios/material_servicios.module';
 import { TransaccionContablesModule } from './core/modules/transaccion_contables/transaccion_contables.module';
 import { LoteProductoModule } from './core/modules/lote_producto/lote_producto.module';
+import { ColoresModule } from './core/modules/colores/colores.module';
 
 @Module({
   imports: [
@@ -74,7 +75,8 @@ import { LoteProductoModule } from './core/modules/lote_producto/lote_producto.m
     OrdenServiciosModule,
     MaterialServiciosModule,
     TransaccionContablesModule,
-    LoteProductoModule
+    LoteProductoModule,
+    ColoresModule
   ],
   controllers: [AppController],
   providers: [AppService],
