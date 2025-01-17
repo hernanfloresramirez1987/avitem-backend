@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Almacenes } from 'src/core/modules/almacenes/entities/almacene.entity';
 import { Categorias } from 'src/core/modules/categorias/entities/categoria.entity';
 import { Clientes } from 'src/core/modules/clientes/entities/cliente.entity';
+import { Colores } from 'src/core/modules/colores/entities/color.entity';
 import { ComboProductos } from 'src/core/modules/combo_productos/entities/combo_producto.entity';
 import { Combos } from 'src/core/modules/combos/entities/combo.entity';
 import { Compras } from 'src/core/modules/compras/entities/compra.entity';
@@ -73,6 +74,7 @@ import { Ventas } from 'src/core/modules/ventas/entities/venta.entity';
               Servicios,
               OrdenServicios,
               MaterialServicios,
+              Colores
             ],
             synchronize: configService.getOrThrow('DB_SYNCRONIZE') === 'true',
           }),

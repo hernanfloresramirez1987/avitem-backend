@@ -14,9 +14,6 @@ export class LoteProductos extends BaseEntity {
   
     @Column({ type: 'int' })
     cantidadReabastecida: number;
-
-    @Column({ type: 'int' })
-    cantidadDespachada: number;
   
     @Column({ type: 'date', nullable: true })
     fechaVencimiento: string;
@@ -29,5 +26,5 @@ export class LoteProductos extends BaseEntity {
   
     @ManyToOne(() => Productos, (producto) => producto.loteProductos)
     @JoinColumn({ name: 'id_producto' })
-    producto: Productos;
+    producto: Productos[];
 }
