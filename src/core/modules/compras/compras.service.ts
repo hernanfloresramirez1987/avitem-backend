@@ -56,6 +56,8 @@ export class ComprasService {
       total: compras.total,
       proveedor: compras.proveedor.empresa
     }));
+
+    console.log('Linea 60.- \n', result);
   
     return result;
   }

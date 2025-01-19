@@ -32,7 +32,7 @@ import { ColoresModule } from './core/modules/colores/colores.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: `.${process.env.NODE_ENV}.env`,
+      envFilePath: `.env`,
       isGlobal: true,
     }),
     DatabaseModule,

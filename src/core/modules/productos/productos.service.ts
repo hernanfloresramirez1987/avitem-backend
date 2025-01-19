@@ -46,9 +46,11 @@ export class ProductosService {
   async findAllOneProveedor(idProveedor: number) {
     const productos = await this.personaRepository.find({
       where: { proveedor: { id: idProveedor } },
-      relations: ['proveedor'] 
+      relations: ['proveedor', 'color'] 
     });
     
+    console.log('Productos Linea 52.- \n', productos);
+
     const result = productos.map(producto => ({
       id: producto.id,
       nombre: producto.nombre,
@@ -58,10 +60,14 @@ export class ProductosService {
       unidadMedida: producto.unidadMedida,
       codigoProducto: producto.codigoProducto,
       id_proveedor: producto.proveedor.id,
+      code: producto.color.code,
+      color: producto.color.color,
       empresa: producto.proveedor.empresa,
       nit: producto.proveedor.nit
     }));
-  
+    
+    console.log();
+
     return result;
   }
 
