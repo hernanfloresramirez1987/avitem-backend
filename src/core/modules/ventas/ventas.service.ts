@@ -25,12 +25,11 @@ export class VentasService {
       .join(',');
 
     // Procedimiento almacenado con los valores
-    const procedureStore = `CALL registro_Venta_y_Detalle_mas_Lote_update_Product(${values}, @resultado, @status);`;
+    const procedureStore = `CALL registrar_venta_y_descuento(${values}, @resultado, @status);`;
 
-    console.log("CALL registro_Venta_y_Detalle_mas_Lote_update_Product($: \n", procedureStore, "\n\n");
+    console.log("CALL registrar_venta_y_descuento($: \n", procedureStore, "\n\n");
     
-    try {
-      // Ejecutar la consulta en la base de datos
+    try { // Ejecutar la consulta en la base de datos
       const execQuery = await this.connection.query(procedureStore);
 
       // Recuperar los valores de los parámetros de salida

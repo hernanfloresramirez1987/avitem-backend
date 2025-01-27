@@ -1,15 +1,34 @@
 import { Injectable } from '@nestjs/common';
 import { CreateAlmaceneDto } from './dto/create-almacene.dto';
 import { UpdateAlmaceneDto } from './dto/update-almacene.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Almacenes } from './entities/almacene.entity';
+import { AlmacenRepository } from 'src/core/shared/repositories/AlmacenRep';
+import { Connection } from 'typeorm';
 
 @Injectable()
 export class AlmacenesService {
-  create(createAlmaceneDto: CreateAlmaceneDto) {
-    return 'This action adds a new almacene';
-  }
+  constructor(
+    @InjectRepository(Almacenes)
+    private almacenRepository: AlmacenRepository,
+    private readonly connection: Connection
+  ) {}
 
-  findAll() {
-    return `This action returns all almacenes`;
+  create(createAlmaceneDto: CreateAlmaceneDto) {
+    
+  }
+    
+  async findAll() {
+    const almacenes = await this.almacenRepository.find(); 
+    const result = almacenes.map(t => ({
+        id: t.id,
+        nombre: t.nombre,
+        direccion: t.direccion,
+        matriz: t.matriz,
+        capacidad: t.capacidad
+      })
+    );
+    return result;
   }
 
   findOne(id: number) {

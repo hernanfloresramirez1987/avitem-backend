@@ -13,6 +13,7 @@ export class ProductosService {
     private personaRepository: ProductoRepository,
     private readonly connection: Connection
   ) {}
+  
   create(createProductoDto: CreateProductoDto) {
     return 'This action adds a new producto';
   }

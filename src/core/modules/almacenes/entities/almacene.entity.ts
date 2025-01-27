@@ -5,6 +5,9 @@ export class Almacenes extends BaseEntity {
   @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
   id: number;
 
+  @Column({ type: 'varchar', length: 100, nullable: false })
+  nombre: string;
+
   @Column({ type: 'varchar', length: 255, nullable: false })
   direccion: string;
 
