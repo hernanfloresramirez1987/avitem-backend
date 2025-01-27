@@ -13,6 +13,7 @@ export class ProductosService {
     private personaRepository: ProductoRepository,
     private readonly connection: Connection
   ) {}
+  
   create(createProductoDto: CreateProductoDto) {
     return 'This action adds a new producto';
   }
@@ -46,7 +47,7 @@ export class ProductosService {
   async findAllOneProveedor(idProveedor: number) {
     const productos = await this.personaRepository.find({
       where: { proveedor: { id: idProveedor } },
-      relations: ['proveedor'] 
+      relations: ['proveedor', 'color'] 
     });
     
     const result = productos.map(producto => ({
@@ -58,16 +59,20 @@ export class ProductosService {
       unidadMedida: producto.unidadMedida,
       codigoProducto: producto.codigoProducto,
       id_proveedor: producto.proveedor.id,
+      code: producto.color.code,
+      color: producto.color.color,
       empresa: producto.proveedor.empresa,
       nit: producto.proveedor.nit
     }));
-  
+    
+    console.log();
+
     return result;
   }
 
   async findAll() {
     const productos = await this.personaRepository.find({ 
-      relations: ['proveedor', 'categoria'] 
+      relations: ['proveedor', 'categoria', 'color'] 
     });
     
     const result = productos.map(producto => ({
@@ -75,6 +80,7 @@ export class ProductosService {
       nombre: producto.nombre,
       descripcion: producto.descripcion,
       cantidadStock: producto.cantidadStock,
+      color: producto.color.color,
       fechaIngreso: producto.fechaIngreso,
       unidadMedida: producto.unidadMedida,
       codigoProducto: producto.codigoProducto,

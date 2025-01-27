@@ -13,8 +13,8 @@ import { Productos } from '../../productos/entities/producto.entity';
     @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
     precioUnitario: number | null;
 
-    @Column({ type: 'int', nullable: false })
-    id_lote_producto: number;
+    // @Column({ type: 'int', nullable: false })
+    // id_lote_producto: number;
   
     @ManyToOne(() => Ventas, (venta) => venta.id, { nullable: true, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'id_venta' })

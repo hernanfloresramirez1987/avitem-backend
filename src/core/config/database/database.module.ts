@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Almacenes } from 'src/core/modules/almacenes/entities/almacene.entity';
 import { Categorias } from 'src/core/modules/categorias/entities/categoria.entity';
@@ -26,33 +26,17 @@ import { Ventas } from 'src/core/modules/ventas/entities/venta.entity';
 @Module({
     imports: [
         TypeOrmModule.forRootAsync({
+          imports: [ConfigModule],
+          inject: [ConfigService],
           useFactory: (configService: ConfigService) => ({
             type: 'mysql',
-            host: configService.getOrThrow('DB_HOST'),
-            port: configService.getOrThrow('DB_PORT'),
-            username: configService.getOrThrow('DB_USERNAME'),
-            password: configService.getOrThrow('DB_PASSWORD'),
-            database: configService.getOrThrow('DB_NAME'),
+            host: '192.168.0.151', //configService.getOrThrow('DB_HOST'),
+            port: 3306, //configService.getOrThrow('DB_PORT'),
+            username: 'root', //configService.getOrThrow('DB_USERNAME'),
+            password: '', //configService.getOrThrow('DB_PASSWORD'),
+            database: 'avitem_prueba', //configService.getOrThrow('DB_NAME'),
             // entities: [__dirname + '/../../core/models/**/*.entity{.ts,.js}'],
             entities: [
-              // Almacenes,
-              // Categorias,
-              // Clientes,
-              // ComboProductos,
-              // Combos,
-              // Compras,
-              // DetalleCompras,
-              // DetalleVentas,
-              // Empleados,
-              // Inventarios,
-              // Personas,
-              // Productos,
-              // Proveedores,
-              // Servicios,
-              // Usuarios,
-              // VentaCombos,
-              // Ventas,
-              
               Personas,
               Empleados,
               Usuarios,
@@ -76,9 +60,9 @@ import { Ventas } from 'src/core/modules/ventas/entities/venta.entity';
               MaterialServicios,
               Colores
             ],
-            synchronize: configService.getOrThrow('DB_SYNCRONIZE') === 'true',
+            synchronize: true, //configService.getOrThrow('DB_SYNCRONIZE') === 'true',
           }),
-          inject: [ConfigService],
+          
         }),
       ],
     })

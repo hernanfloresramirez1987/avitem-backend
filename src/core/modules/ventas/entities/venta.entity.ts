@@ -27,4 +27,7 @@ export class Ventas extends BaseEntity {
 
     @OneToMany(() => VentaCombos, (ventaCombo) => ventaCombo.venta)
     ventaCombos: VentaCombos[];
+
+    @Column({ type: 'bool', default: false })
+    confactura: boolean;
 }

@@ -13,7 +13,7 @@ export class ComprasController {
   }
 
   @Post('register')
-  saveEmp(@Body() createCompraDto: any) {
+  saveCompra(@Body() createCompraDto: any) {
     return this.comprasService.saveCompra(createCompraDto);
   }
 

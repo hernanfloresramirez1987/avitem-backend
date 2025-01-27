@@ -12,6 +12,11 @@ export class VentasController {
     return this.ventasService.create(createVentaDto);
   }
 
+  @Post('register')
+  saveVenta(@Body() createCompraDto: any) {
+    return this.ventasService.saveVenta(createCompraDto);
+  }
+
   @Get()
   findAll() {
     return this.ventasService.findAll();
