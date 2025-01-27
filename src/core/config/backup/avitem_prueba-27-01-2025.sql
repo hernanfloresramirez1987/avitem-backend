@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 14, 2025 at 07:46 AM
+-- Generation Time: Jan 27, 2025 at 12:28 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -75,13 +75,17 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `descontar_inventario` (IN `p_id_pro
   END WHILE;
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `registrar_venta_y_descuento` (IN `p_fechaVenta` DATE, IN `p_total` DECIMAL(10,2), IN `p_id_cliente` BIGINT(20), IN `p_id_empleado` BIGINT(20), IN `p_tokenSIN` BIGINT(20), IN `p_detalle` JSON, OUT `p_resultado` VARCHAR(100), OUT `p_status` INT)   main_block: BEGIN  -- Añadida etiqueta al bloque principal
+CREATE DEFINER=`root`@`localhost` PROCEDURE `registrar_venta_y_descuento` (IN `p_fechaVenta` DATE, IN `p_total` DECIMAL(10,2), IN `p_id_cliente` BIGINT(20), IN `p_id_empleado` BIGINT(20), IN `p_confactura` INT, IN `p_tokenSIN` VARCHAR(255), IN `p_detalle` JSON, OUT `p_resultado` VARCHAR(100), OUT `p_status` INT)   BEGIN  -- Añadida etiqueta al bloque principal
   DECLARE v_id_venta BIGINT(20);
   DECLARE i INT DEFAULT 0;
   DECLARE v_cantidad INT;
   DECLARE v_precioUnitario DECIMAL(10,2);
   DECLARE v_id_producto INT;
   DECLARE v_stockDisponible INT;
+  DECLARE v_productExists INT ;
+  DECLARE v_stocktotal INT;
+  DECLARE v_cantidadStock INT;
+  DECLARE v_id_almacen INT;
 
   -- Manejador de excepciones
   DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -93,58 +97,104 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `registrar_venta_y_descuento` (IN `p
 
   START TRANSACTION;
 
-  -- Validar cantidades de los productos en el JSON detalle
-  WHILE JSON_LENGTH(p_detalle) > i DO
-      SET v_cantidad = JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].cantidad'));
-      SET v_id_producto = JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].id_producto'));
+    -- Validar cantidades de los productos en el JSON detalle
+    WHILE JSON_LENGTH(p_detalle) > i DO
+        SET v_cantidad = JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].cantidad'));
+        SET v_id_producto = JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].id_producto'));
+        SET v_precioUnitario = JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].precioUnitario'));
 
-      -- Obtener la cantidad disponible (cantidadStock)
-      SELECT cantidadStock
-      INTO v_stockDisponible
-      FROM producto WHERE id = v_id_producto;
+        -- Obtener la cantidad disponible (cantidadStock)
+        SELECT cantidadStock
+        INTO v_stockDisponible
+        FROM producto WHERE id = v_id_producto;
 
-      -- Verificar si la cantidad solicitada supera el stock disponible
-      IF v_cantidad > v_stockDisponible THEN
-          ROLLBACK;
-          SET p_resultado = CONCAT('Error: Stock insuficiente para el producto con ID: ', v_id_producto);
-          SET p_status = 400;
-          LEAVE main_block; -- Ahora hace referencia a la etiqueta
-      END IF;
+        -- Verificar si la cantidad solicitada supera el stock disponible
+        IF v_cantidad > v_stockDisponible THEN
+            ROLLBACK;
+            SET p_resultado = CONCAT('Error: Stock insuficiente para el producto con ID: ', v_id_producto);
+            SET p_status = 400;
+        END IF;
 
-      SET i = i + 1;
-  END WHILE;
+        SET i = i + 1;
+    END WHILE;
 
-  -- Insertar la venta en la tabla 'venta'
-  INSERT INTO venta (fechaVenta, total, id_cliente)
-  VALUES (p_fechaVenta, p_total, p_id_cliente);
+    -- Insertar la venta en la tabla 'venta'
+    INSERT INTO venta (fechaVenta, total, tokenSIM, id_cliente, id_empleado, confactura)
+    VALUES (p_fechaVenta, p_total, p_tokenSIN, p_id_cliente, p_id_empleado, p_confactura);
+  
+    -- Verificar si la inserción fue exitosa
+    IF ROW_COUNT() = 0 THEN
+        SELECT 'Error en INSERT venta', v_id_producto, v_cantidad, v_precioUnitario;
+        ROLLBACK;
+    END IF;
 
-  -- Obtener el ID de la venta recién insertada
-  SET v_id_venta = LAST_INSERT_ID();
+    -- Obtener el ID de la venta recién insertada
+    SET v_id_venta = LAST_INSERT_ID();
 
-  -- Reiniciar índice para procesar los detalles
-  SET i = 0;
+    -- Reiniciar índice para procesar los detalles
+    SET i = 0;
+    -- Procesar cada producto en el JSON detalle
+    WHILE i < JSON_LENGTH(p_detalle) DO
+            SET v_cantidad = JSON_UNQUOTE(JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].cantidad')));
+            SET v_precioUnitario = JSON_UNQUOTE(JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].precioUnitario')));
+            SET v_id_producto = JSON_UNQUOTE(JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].id_producto')));
+            SET v_id_almacen = JSON_UNQUOTE(JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].id_almacen')));
 
-  -- Procesar cada producto en el JSON detalle
-  WHILE JSON_LENGTH(p_detalle) > i DO
-      SET v_cantidad = JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].cantidad'));
-      SET v_precioUnitario = JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].precioUnitario'));
-      SET v_id_producto = JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].id_producto'));
+           -- Validar que los campos necesarios sean positivos
+           IF v_cantidad <= 0 OR v_precioUnitario <= 0 THEN
+               SET p_resultado = CONCAT('Error: Cantidad o Precio unitario deben ser mayores a cero (detalle index ', i, ').');
+               SET p_status = 400;
+               ROLLBACK;
+           END IF;
+           -- Validar que el producto exista
+           SELECT COUNT(*) INTO v_productExists FROM producto WHERE id = v_id_producto;
+           IF v_productExists = 0 THEN
+               SET p_resultado = CONCAT('Error: El producto con ID ', v_id_producto, ' no existe (detalle index ', i, ').');
+               SET p_status = 404;
+               ROLLBACK;
+           END IF;
+
+           -- Seleccionar el stock actual del producto
+           SELECT cantidadStock INTO v_cantidadStock
+           FROM producto
+           WHERE id = v_id_producto;
+
+           UPDATE producto
+           SET cantidadStock = v_cantidadStock - v_cantidad
+           WHERE id = v_id_producto;
 
 
-      -- Insertar en detalle_venta
-      INSERT INTO detalle_venta (cantidad, precioUnitario, id_venta, id_producto)
-      VALUES (v_cantidad, v_precioUnitario, v_id_venta, v_id_producto);
+            -- Insertar en detalle_venta
+            INSERT INTO detalle_venta (cantidad, precioUnitario, id_venta, id_producto)
+            VALUES (v_cantidad, v_precioUnitario, v_id_venta, v_id_producto);
 
-      -- Descontar del inventario
-      CALL descontar_inventario(v_id_producto, v_cantidad);
+            -- SELECT cantidadStock INTO v_stocktotal FROM producto
+            -- WHERE id = v_id_producto;
 
-      SET i = i + 1;
-  END WHILE;
+            -- SET v_stocktotal = v_stocktotal - v_cantidad;
 
-  COMMIT;
+            INSERT INTO inventario (cantidadStock, fechaInventario, id_producto, id_almacen, cantidadReservada, cantidadDespachada, fechaIngreso, fechaSalida, idLote)
+            VALUES ((v_cantidadStock - v_cantidad), CURRENT_DATE, v_id_producto, v_id_almacen, v_cantidad, v_cantidad, CURRENT_DATE, CURRENT_DATE, 0);
+            -- Verificar si la inserción fue exitosa
+            IF ROW_COUNT() = 0 THEN
+               SELECT 'Error en INSERT inventory', v_numLote, v_cantidadStock, p_fechaCompra, v_id_producto, v_id_almacen, v_cantidad, v_precioUnitario, v_precioVenta, v_id_producto;
+               ROLLBACK;
+            END IF;
 
-  SET p_resultado = 'Venta registrada exitosamente';
-  SET p_status = 200;
+           -- Incrementar el índice para el siguiente elemento del JSON
+           SET i = i + 1;
+       END WHILE;
+
+    -- Verificar si las inserciones fueron exitosas
+    IF ROW_COUNT() > 0 THEN
+        SET p_resultado = 'Registro de ventas completado exitosamente';
+        SET p_status = 201;
+        COMMIT;
+    ELSE
+        SET p_resultado = 'Error: No se pudo completar el registro de la venta o los detalles';
+        SET p_status = 400;
+        ROLLBACK;
+    END IF;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `registro_Compra_y_Detalle_mas_Lote_update_Product` (IN `p_fechaCompra` DATE, IN `p_total` DECIMAL(10,2), IN `p_id_proveedor` BIGINT(20) UNSIGNED, IN `p_detalle` JSON, IN `p_fechaVencimiento` DATE, OUT `p_resultado` VARCHAR(100), OUT `p_status` INT)   BEGIN
@@ -156,119 +206,153 @@ DECLARE v_precioVenta DECIMAL(10,2);
 DECLARE v_id_producto INT;
 DECLARE v_numLote INT;
 DECLARE v_cantidadStock INT;
+DECLARE v_id_almacen INT;
+DECLARE v_stocktotal INT;
+DECLARE v_id_lote INT;
+
 
 DECLARE v_validProveedor INT;
 DECLARE v_productExists INT;
 DECLARE v_error BOOLEAN DEFAULT FALSE;
 
+
 -- Manejador de excepciones
 DECLARE EXIT HANDLER FOR SQLEXCEPTION
 BEGIN
-    ROLLBACK;
-    SET p_resultado = 'Error: No se pudo completar el registro. Transacción revertida.';
-    SET p_status = 400;
+   ROLLBACK;
+   SET p_resultado = 'Error: No se pudo completar el registro. Transacción revertida.';
+   SET p_status = 400;
 END;
 
-    -- Validar que el total de la compra sea positivo
-    IF p_total <= 0 THEN
-        SET p_resultado = 'Error: El total de la compra debe ser mayor a cero.';
-        SET p_status = 400;
-        SET v_error = TRUE;
-    END IF;
-    -- Validar que el proveedor exista
-    IF NOT v_error THEN
-        SELECT COUNT(*) INTO v_validProveedor FROM proveedor WHERE id = p_id_proveedor;
-        IF v_validProveedor = 0 THEN
-            SET p_resultado = 'Error: El proveedor especificado no existe.';
-            SET p_status = 404;
-            SET v_error = TRUE;
-        END IF;
-    END IF;
-    -- Validar que la fecha de vencimiento sea futura
-    IF NOT v_error AND p_fechaVencimiento <= CURDATE() THEN
-        SET p_resultado = 'Error: La fecha de vencimiento debe ser posterior a la fecha actual.';
-        SET p_status = 400;
-        SET v_error = TRUE;
-    END IF;
-    IF v_error THEN
-        ROLLBACK;
-    END IF;
 
-    -- Iniciar la transacción
-    START TRANSACTION;
+   -- Validar que el total de la compra sea positivo
+   IF p_total <= 0 THEN
+       SET p_resultado = 'Error: El total de la compra debe ser mayor a cero.';
+       SET p_status = 400;
+       SET v_error = TRUE;
+   END IF;
+   -- Validar que el proveedor exista
+   IF NOT v_error THEN
+       SELECT COUNT(*) INTO v_validProveedor FROM proveedor WHERE id = p_id_proveedor;
+       IF v_validProveedor = 0 THEN
+           SET p_resultado = 'Error: El proveedor especificado no existe.';
+           SET p_status = 404;
+           SET v_error = TRUE;
+       END IF;
+   END IF;
+   -- Validar que la fecha de vencimiento sea futura
+   IF NOT v_error AND p_fechaVencimiento <= CURDATE() THEN
+       SET p_resultado = 'Error: La fecha de vencimiento debe ser posterior a la fecha actual.';
+       SET p_status = 400;
+       SET v_error = TRUE;
+   END IF;
+   IF v_error THEN
+       ROLLBACK;
+   END IF;
 
-        -- Insertar la compra
-        INSERT INTO compra (fechaCompra, total, id_proveedor)
-        VALUES (p_fechaCompra, p_total, p_id_proveedor);
 
-        -- Obtener el ID de la compra recién insertada
-        SET v_id_compra = LAST_INSERT_ID();
+   -- Iniciar la transacción
+   START TRANSACTION;
 
-        -- Obtener el último número de lote e incrementarlo
-        SET v_numLote = COALESCE((SELECT MAX(CAST(numLote AS SIGNED)) FROM lote_producto), 0) + 1;
 
-        -- Iterar sobre los detalles proporcionados (usando un JSON de detalles)
-        WHILE i < JSON_LENGTH(p_detalle) DO
+       -- Insertar la compra
+       INSERT INTO compra (fechaCompra, total, id_proveedor)
+       VALUES (p_fechaCompra, p_total, p_id_proveedor);
+
+
+       -- Obtener el ID de la compra recién insertada
+       SET v_id_compra = LAST_INSERT_ID();
+
+
+       -- Obtener el último número de lote e incrementarlo
+       SET v_numLote = COALESCE((SELECT MAX(CAST(numLote AS SIGNED)) FROM lote_producto), 0) + 1;
+
+
+       -- Iterar sobre los detalles proporcionados (usando un JSON de detalles)
+       WHILE i < JSON_LENGTH(p_detalle) DO
             SET v_cantidad = JSON_UNQUOTE(JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].cantidad')));
             SET v_precioUnitario = JSON_UNQUOTE(JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].precioUnitario')));
             SET v_precioVenta = JSON_UNQUOTE(JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].precioVenta')));
             SET v_id_producto = JSON_UNQUOTE(JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].id_producto')));
+            SET v_id_almacen = JSON_UNQUOTE(JSON_EXTRACT(p_detalle, CONCAT('$[', i, '].id_almacen')));
 
-            -- Validar que los campos necesarios sean positivos
-            IF v_cantidad <= 0 OR v_precioUnitario <= 0 OR v_precioVenta <= 0 THEN
-                SET p_resultado = CONCAT('Error: Cantidad, precio unitario y precio de venta deben ser mayores a cero (detalle index ', i, ').');
-                SET p_status = 400;
-                ROLLBACK;
-            END IF;
-            -- Validar que el producto exista
-            SELECT COUNT(*) INTO v_productExists FROM producto WHERE id = v_id_producto;
-            IF v_productExists = 0 THEN
-                SET p_resultado = CONCAT('Error: El producto con ID ', v_id_producto, ' no existe (detalle index ', i, ').');
-                SET p_status = 404;
-                ROLLBACK;
-            END IF;
+           -- Validar que los campos necesarios sean positivos
+           IF v_cantidad <= 0 OR v_precioUnitario <= 0 OR v_precioVenta <= 0 THEN
+               SET p_resultado = CONCAT('Error: Cantidad, precio unitario y precio de venta deben ser mayores a cero (detalle index ', i, ').');
+               SET p_status = 400;
+               ROLLBACK;
+           END IF;
+           -- Validar que el producto exista
+           SELECT COUNT(*) INTO v_productExists FROM producto WHERE id = v_id_producto;
+           IF v_productExists = 0 THEN
+               SET p_resultado = CONCAT('Error: El producto con ID ', v_id_producto, ' no existe (detalle index ', i, ').');
+               SET p_status = 404;
+               ROLLBACK;
+           END IF;
 
-            -- Seleccionar el stock actual del producto
-            SELECT cantidadStock INTO v_cantidadStock
-            FROM producto
+
+           -- Seleccionar el stock actual del producto
+           SELECT cantidadStock INTO v_cantidadStock
+           FROM producto
+           WHERE id = v_id_producto;
+
+
+           -- Insertar el detalle de la compra en 'detalle_compra'
+           INSERT INTO detalle_compra (cantidad, precioUnitario, id_compra, id_producto)
+           VALUES (v_cantidad, v_precioUnitario, v_id_compra, v_id_producto);
+           -- Verificar si la inserción fue exitosa
+           IF ROW_COUNT() = 0 THEN
+               SELECT 'Error en INSERT detalle_compra', v_id_producto, v_cantidad, v_precioUnitario;
+               ROLLBACK;
+           END IF;
+
+
+           -- Insertar el lote en 'lote_producto' linea 108 - 115
+           INSERT INTO lote_producto (numLote, fechaReabastecimiento, cantidadReabastecida, fechaVencimiento, precioCompra, precioVenta, id_producto)
+           VALUES (v_numLote, p_fechaCompra, v_cantidad, p_fechaVencimiento, v_precioUnitario, v_precioVenta, v_id_producto);
+            -- Verificar si la inserción fue exitosa
+           IF ROW_COUNT() = 0 THEN
+               SELECT 'Error en INSERT lote_producto', v_numLote, p_fechaCompra, v_cantidad, p_fechaVencimiento, v_precioUnitario, v_precioVenta, v_id_producto;
+               ROLLBACK;
+           END IF;           
+        
+           SET v_id_lote = LAST_INSERT_ID();
+
+           -- Actualizar el stock del producto en la tabla 'producto'
+           UPDATE producto
+           SET cantidadStock = v_cantidadStock + v_cantidad
+           WHERE id = v_id_producto;
+
+
+            SELECT cantidadStock INTO v_stocktotal FROM producto
             WHERE id = v_id_producto;
 
-            -- Insertar el detalle de la compra en 'detalle_compra'
-            INSERT INTO detalle_compra (cantidad, precioUnitario, id_compra, id_producto)
-            VALUES (v_cantidad, v_precioUnitario, v_id_compra, v_id_producto);
+            INSERT INTO inventario (cantidadStock, fechaInventario, id_producto, id_almacen, cantidadReservada, cantidadDespachada, fechaIngreso, fechaSalida, idLote)
+            VALUES (v_stocktotal, CURRENT_DATE, v_id_producto, v_id_almacen, 0, 0, CURRENT_DATE, CURRENT_DATE, v_id_lote);
             -- Verificar si la inserción fue exitosa
             IF ROW_COUNT() = 0 THEN
-                SELECT 'Error en INSERT detalle_compra', v_id_producto, v_cantidad, v_precioUnitario;
-                ROLLBACK;
+               SELECT 'Error en INSERT inventory', v_numLote, v_cantidadStock, p_fechaCompra, v_id_producto, v_id_almacen, v_cantidad, v_precioUnitario, v_precioVenta, v_id_producto;
+               ROLLBACK;
             END IF;
 
-            -- Insertar el lote en 'lote_producto' linea 108 - 115
-            INSERT INTO lote_producto (numLote, fechaReabastecimiento, cantidadReabastecida, fechaVencimiento, precioCompra, precioVenta, id_producto)
-            VALUES (v_numLote, p_fechaCompra, v_cantidad, p_fechaVencimiento, v_precioUnitario, v_precioVenta, v_id_producto);
-             -- Verificar si la inserción fue exitosa
-            IF ROW_COUNT() = 0 THEN
-                SELECT 'Error en INSERT lote_producto', v_numLote, p_fechaCompra, v_cantidad, p_fechaVencimiento, v_precioUnitario, v_precioVenta, v_id_producto;
-                ROLLBACK;
-            END IF;            
 
-            -- Actualizar el stock del producto en la tabla 'producto'
-            UPDATE producto
-            SET cantidadStock = v_cantidadStock + v_cantidad
-            WHERE id = v_id_producto;
 
-            -- Incrementar el índice para el siguiente elemento del JSON
-            SET i = i + 1;
-        END WHILE;
+
+
+           -- Incrementar el índice para el siguiente elemento del JSON
+           SET i = i + 1;
+       END WHILE;
+
 
 -- Verificar si las inserciones fueron exitosas
 IF ROW_COUNT() > 0 THEN
-    SET p_resultado = 'Registro de compras completado exitosamente';
-    SET p_status = 201;
-    COMMIT;
+   SET p_resultado = 'Registro de compras completado exitosamente';
+   SET p_status = 201;
+   COMMIT;
 ELSE
-    SET p_resultado = 'Error: No se pudo completar el registro de la compra o los detalles';
-    SET p_status = 400;
-    ROLLBACK;
+   SET p_resultado = 'Error: No se pudo completar el registro de la compra o los detalles';
+   SET p_status = 400;
+   ROLLBACK;
 END IF;
 END$$
 
@@ -379,7 +463,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `registro_persona_proveedor` (IN `p_
    END IF;
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `registro_producto` (IN `p_nombre` VARCHAR(100), IN `p_descripcion` TEXT, IN `p_cantidadStock` INT, IN `p_fechaIngreso` DATE, IN `p_unidadMedida` VARCHAR(20), IN `p_codigoProducto` VARCHAR(50), IN `p_idProveedor` BIGINT, IN `p_idCategoria` BIGINT, IN `p_state` INT, OUT `p_resultado` VARCHAR(100), OUT `p_status` INT)   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `registro_producto` (IN `p_nombre` VARCHAR(100), IN `p_descripcion` TEXT, IN `p_cantidadStock` INT, IN `p_fechaIngreso` DATE, IN `p_unidadMedida` VARCHAR(20), IN `p_codigoProducto` VARCHAR(50), IN `p_idProveedor` BIGINT, IN `p_idCategoria` BIGINT, IN `p_idColor` BIGINT, IN `p_state` INT, OUT `p_resultado` VARCHAR(100), OUT `p_status` INT)   BEGIN
    DECLARE v_proveedorExiste INT;
    DECLARE v_codigoProductoExiste INT;
 
@@ -416,8 +500,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `registro_producto` (IN `p_nombre` V
 
 
            -- Insertar el producto
-           INSERT INTO producto (nombre,descripcion,cantidadStock,fechaIngreso,unidadMedida,codigoProducto,id_proveedor,id_categoria,state)
-           VALUES (p_nombre,p_descripcion,p_cantidadStock,p_fechaIngreso,p_unidadMedida,p_codigoProducto,p_idProveedor,p_idCategoria,p_state);
+           INSERT INTO producto (nombre,descripcion,cantidadStock,fechaIngreso,unidadMedida,codigoProducto,id_proveedor,id_categoria, id_color,state)
+           VALUES (p_nombre,p_descripcion,p_cantidadStock,p_fechaIngreso,p_unidadMedida,p_codigoProducto,p_idProveedor,p_idCategoria, p_idColor, p_state);
 
 
            -- Verificar si la inserción fue exitosa
@@ -446,8 +530,16 @@ CREATE TABLE `almacen` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `direccion` varchar(255) NOT NULL,
   `matriz` tinyint(4) NOT NULL,
-  `capacidad` bigint(20) UNSIGNED DEFAULT NULL
+  `capacidad` bigint(20) UNSIGNED DEFAULT NULL,
+  `nombre` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `almacen`
+--
+
+INSERT INTO `almacen` (`id`, `direccion`, `matriz`, `capacidad`, `nombre`) VALUES
+(1, 'Casa Matriz', 1, 1000000, 'Almacen Casas Matriz');
 
 -- --------------------------------------------------------
 
@@ -466,9 +558,9 @@ CREATE TABLE `categoria` (
 --
 
 INSERT INTO `categoria` (`id`, `nombre`, `descripcion`) VALUES
-(1, 'categoria 1', 'descripcion categoria 1'),
-(2, 'Categoria 2', 'Descipcion 2'),
-(3, 'Categoria 3', 'Descripcion 3');
+(1, 'Socalo Cromado', 'descripcion categoria 1'),
+(2, 'Categoria Buchata Cromado', 'Descipcion 2'),
+(3, 'Pivote', 'Descripcion 3');
 
 -- --------------------------------------------------------
 
@@ -490,7 +582,29 @@ CREATE TABLE `cliente` (
 --
 
 INSERT INTO `cliente` (`id`, `ci`, `nit`, `typeCnFact`, `state`, `id_persona`) VALUES
-(1, 7778989, 87070, 0, 1, 1);
+(2, 65467, NULL, 0, 1, 9);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `color`
+--
+
+CREATE TABLE `color` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `code` varchar(10) DEFAULT NULL,
+  `color` varchar(50) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `color`
+--
+
+INSERT INTO `color` (`id`, `code`, `color`) VALUES
+(1, 'Nat', 'Natural'),
+(2, 'Cha', 'Champan'),
+(3, 'Neg', 'Negro'),
+(4, 'Mad', 'Madera');
 
 -- --------------------------------------------------------
 
@@ -537,8 +651,7 @@ CREATE TABLE `compra` (
 --
 
 INSERT INTO `compra` (`id`, `fechaCompra`, `total`, `id_proveedor`) VALUES
-(110, '2025-01-14', 900.00, 1),
-(114, '2025-01-14', 616.00, 1);
+(201, '2025-01-27', 426.00, 5);
 
 -- --------------------------------------------------------
 
@@ -559,8 +672,9 @@ CREATE TABLE `detalle_compra` (
 --
 
 INSERT INTO `detalle_compra` (`id`, `cantidad`, `precioUnitario`, `id_compra`, `id_producto`) VALUES
-(128, 100, 9.00, 110, 15),
-(132, 77, 8.00, 114, 15);
+(216, 100, 2.50, 201, 17),
+(217, 8, 12.00, 201, 19),
+(218, 8, 10.00, 201, 21);
 
 -- --------------------------------------------------------
 
@@ -573,9 +687,16 @@ CREATE TABLE `detalle_venta` (
   `cantidad` int(11) NOT NULL,
   `precioUnitario` decimal(10,2) DEFAULT NULL,
   `id_venta` bigint(20) UNSIGNED DEFAULT NULL,
-  `id_producto` int(11) DEFAULT NULL,
-  `id_lote_producto` int(11) NOT NULL
+  `id_producto` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `detalle_venta`
+--
+
+INSERT INTO `detalle_venta` (`id`, `cantidad`, `precioUnitario`, `id_venta`, `id_producto`) VALUES
+(68, 6, 90.00, 73, 17),
+(69, 2, 27.50, 73, 19);
 
 -- --------------------------------------------------------
 
@@ -597,10 +718,8 @@ CREATE TABLE `empleado` (
 --
 
 INSERT INTO `empleado` (`id`, `idtipo`, `idcargo`, `salario`, `idper`, `fing`) VALUES
-(1, 1, 2, 3500, 1, ''),
-(2, 1, 2, 3500, 1, ''),
-(3, 1, 1, 750, 3, ''),
-(4, 1, 2, 3500, 1, '2024-01-15');
+(5, 1, 1, 0, 9, '2025-01-16T01:24:56.443Z'),
+(6, 3, 2, 12000, 9, '2025-01-16T01:24:56.443Z');
 
 -- --------------------------------------------------------
 
@@ -620,6 +739,17 @@ CREATE TABLE `inventario` (
   `fechaSalida` date DEFAULT NULL,
   `idLote` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `inventario`
+--
+
+INSERT INTO `inventario` (`id`, `cantidadStock`, `fechaInventario`, `id_producto`, `id_almacen`, `cantidadReservada`, `cantidadDespachada`, `fechaIngreso`, `fechaSalida`, `idLote`) VALUES
+(58, 100, '2025-01-27', 17, 1, 0, 0, '2025-01-27', '2025-01-27', 85),
+(59, 8, '2025-01-27', 19, 1, 0, 0, '2025-01-27', '2025-01-27', 86),
+(60, 8, '2025-01-27', 21, 1, 0, 0, '2025-01-27', '2025-01-27', 87),
+(61, 94, '2025-01-27', 17, NULL, 6, 6, '2025-01-27', '2025-01-27', 0),
+(62, 6, '2025-01-27', 19, NULL, 2, 2, '2025-01-27', '2025-01-27', 0);
 
 -- --------------------------------------------------------
 
@@ -643,7 +773,9 @@ CREATE TABLE `lote_producto` (
 --
 
 INSERT INTO `lote_producto` (`id`, `numLote`, `fechaReabastecimiento`, `cantidadReabastecida`, `fechaVencimiento`, `precioCompra`, `precioVenta`, `id_producto`) VALUES
-(1, '1', '2025-01-14', 77, '2025-12-31', 8.00, 16.00, 15);
+(85, '1', '2025-01-27', 100, '2025-12-31', 2.50, 5.00, 17),
+(86, '1', '2025-01-27', 8, '2025-12-31', 12.00, 29.00, 19),
+(87, '1', '2025-01-27', 8, '2025-12-31', 10.00, 20.00, 21);
 
 -- --------------------------------------------------------
 
@@ -702,11 +834,10 @@ CREATE TABLE `persona` (
 --
 
 INSERT INTO `persona` (`id`, `ci`, `ciExpedit`, `ciComplement`, `nombre`, `app`, `apm`, `sexo`, `fnaci`, `direccion`, `telefono`, `email`, `state`) VALUES
-(1, '123456', 'LP', 0, 'Juan', 'Perez', 'Gomez', 'M', '1990-01-01', 'Av. 6 de Agosto #123', '71234567', 'juan.perez@email.com', 1),
-(2, '12345678', 'LP', 0, 'Juan', 'Perez', 'Gomez', 'M', '1990-01-01', 'Av. 6 de Agosto #123', '71234567', 'juan.perez@email.com', 1),
-(3, '3999257', 'PO', 0, 'hernan', 'flores', 'ramirez', 'V', '2024-12-29', 'av siempre viva', '62000750', 'hernanfloresramirez1987@gmaill.com', 1),
-(4, '39992571', 'st', 0, 'pepe2', 'stringapp2', 'stringapm2', 'V', '1988-10-09', 'string', '12345678', 'string@gmail.com', 1),
-(5, '39992572', 'st', 0, 'pepe2', 'stringapp2', 'stringapm2', 'V', '1988-10-09', 'string', '12345678', 'string@gmail.com', 1);
+(6, '11111111', 'CB', 0, 'Aluminios', 'Mega', 'Alumn', 'M', '2024-01-05', 's/n direccion', '70735036', 'sinemail@gmail.com', 1),
+(7, '22222222', 'CB', 0, 'sandy', 'vid', '', 'M', '2024-02-02', 'sin direccion', '70721528', 'sinemailsandy@gmail.com', 1),
+(8, '33333333', 'ch', 0, 'Renhua', 'Boshi Aluminum Industry Co., Ltd', '', 'V', '2024-03-03', 'sin direccion ', '591 72398702', 'sinemailrenhua@gmail.com', 1),
+(9, '10101010', 'CB', 0, 'Lidia', 'Avitem', '', 'M', '1990-05-05', 'Av de las Banderas', '591 72398702', 'lidiaavitem@gmail.com', 1);
 
 -- --------------------------------------------------------
 
@@ -724,16 +855,26 @@ CREATE TABLE `producto` (
   `codigoProducto` varchar(50) NOT NULL,
   `state` int(11) NOT NULL,
   `id_proveedor` bigint(20) UNSIGNED DEFAULT NULL,
-  `id_categoria` bigint(20) UNSIGNED DEFAULT NULL
+  `id_categoria` bigint(20) UNSIGNED DEFAULT NULL,
+  `id_color` bigint(20) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `producto`
 --
 
-INSERT INTO `producto` (`id`, `nombre`, `descripcion`, `cantidadStock`, `fechaIngreso`, `unidadMedida`, `codigoProducto`, `state`, `id_proveedor`, `id_categoria`) VALUES
-(15, 'L-20 RIEL SUPERIOR1,10MM', 'descripcion L-20 RIEL SUPERIOR1,10MM', 177, '0000-00-00', 'NATURAL', 'L20Natural', 1, 1, 1),
-(16, 'L-20 RIEL SUPERIOR1,10MM', 'descripcion L-20 RIEL SUPERIOR1,10MM Champan', 0, '0000-00-00', 'Champan', 'L-20Ch', 1, 1, 2);
+INSERT INTO `producto` (`id`, `nombre`, `descripcion`, `cantidadStock`, `fechaIngreso`, `unidadMedida`, `codigoProducto`, `state`, `id_proveedor`, `id_categoria`, `id_color`) VALUES
+(17, 'Zocalo Superior Jumbo', 'Descripcion - Zocalo Superior Jumbo', 94, '2024-11-16', 'Cromo', 'A97', 1, 5, 1, 2),
+(18, 'Zocalo Inferior Jumbo', 'Descripcion - Zocalo Inferior Jumbo', 0, '2024-11-16', 'Cromado', 'A98', 1, 5, 1, 2),
+(19, 'Buchata', 'Descripcion - Buchata', 6, '2024-11-16', 'Cromado', 'A63', 1, 5, 2, 4),
+(20, 'Socalo Superior', 'Descripcion - Socalo Superior', 0, '2024-11-16', 'Cromado', 'A61', 1, 5, 1, 3),
+(21, 'Socalo Inferior', 'Descripcion - Socalo Superior', 8, '2024-11-16', 'Cromado', 'A62', 1, 5, 1, 1),
+(22, 'Pivote Loco', 'Descripcion - Pivote Loco', 0, '2024-11-16', 'Cromado', 'A60', 1, 5, 3, 4),
+(23, 'nuevo producto de prueba', 'cualquier cosas de descripcion', 0, '2025-01-16', 'Sin color', '7777', 1, 6, 2, 3),
+(24, 'Producto A', 'Descripción del producto', 0, '2024-12-15', 'Unidad', 'CÓDIGO123', 1, 7, 1, 1),
+(25, 'product x', 'xxx', 0, '2025-01-01', 'Plancha', 'micode', 1, 7, 1, 2),
+(26, 'kokok', '3mn23n.,. 3jkl2jh', 0, '2025-01-09', 'asd', '90d', 1, 5, 2, 2),
+(27, 'my product', 'descripcion del producto', 0, '2025-01-19', 'Unidad', '32d', 1, 5, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -755,8 +896,9 @@ CREATE TABLE `proveedor` (
 --
 
 INSERT INTO `proveedor` (`id`, `empresa`, `nit`, `telefonoEmpresa`, `direccionEmpresa`, `id_persona`) VALUES
-(1, 'RENHUA BOSHI ALUMINUM', '123456789', '22334455', 'Direccion renhua', 2),
-(4, 'Nonferrous metal economic industrial base', '3999257010', '72000750', 'Direccion nonferrous', 3);
+(5, 'Aluminios Mega Alum', '1111111111', '70735036', 'sin direccion de empresa por el momento', 6),
+(6, 'Sandy Vid', '2222222222', '70721528', 'sin direccion de empresa sandy vid, cochabamba', 7),
+(7, 'Renhua Boshi Aluminum Industry Co., Ltd', '3333333333', '591 72398702', 'AV. LAS BANDERAS #34 ZONA NUEVA TERMINAL,POTOSÍ BOLIVIA', 8);
 
 -- --------------------------------------------------------
 
@@ -795,10 +937,8 @@ CREATE TABLE `usuario` (
 --
 
 INSERT INTO `usuario` (`id`, `username`, `passwordHash`, `rol`, `estado`, `fechaCreacion`, `id_empleado`) VALUES
-(1, 'juan.perez', '$2a$10$xxxxxxxxxxx', 'user', 'activo', '2024-12-29 23:04:11', 1),
-(2, 'juan.perez2', '$2b$10$SKcuxOQaf6j2C2.IBQ/4SuYxV/AX/pu/vWqk9ZB1eHbJASuNDoOO6', 'user', 'activo', '2024-12-30 01:37:30', 2),
-(3, 'hernanfr', '$2b$10$YYNdunZUtJ1gTgILM2ufx.Ofy3UQHPa8WHYOaRFD3FoSCverZRR7q', 'admin', 'activo', '2024-12-30 01:46:14', 3),
-(4, 'juan.perez3', '$2b$10$zxEOx7s.yZz7VSWqp.LtGuDGjmAPIBBJOR9L199peOZAaWmFjq0Xm', 'user', 'activo', '2024-12-31 03:26:20', 4);
+(5, 'lidia', '$2b$10$nBQrx8.aVHadaPc59YtfU.7lEe1cdWjduHWVIxRLCxVg2/29XO33e', 'admin', 'activo', '2025-01-16 01:26:40', 5),
+(6, 'hernanfr', '$2b$10$pHfdOL7ZKKr/HbqzDrVyjuIujwUGb/8tcrmm9vJMJIUczCa/Hgfie', 'user', 'activo', '2025-01-16 01:30:50', 6);
 
 -- --------------------------------------------------------
 
@@ -812,8 +952,16 @@ CREATE TABLE `venta` (
   `total` decimal(10,2) DEFAULT NULL,
   `tokenSIM` varchar(255) DEFAULT NULL,
   `id_cliente` bigint(20) UNSIGNED DEFAULT NULL,
-  `id_empleado` bigint(20) UNSIGNED DEFAULT NULL
+  `id_empleado` bigint(20) UNSIGNED DEFAULT NULL,
+  `confactura` tinyint(4) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `venta`
+--
+
+INSERT INTO `venta` (`id`, `fechaVenta`, `total`, `tokenSIM`, `id_cliente`, `id_empleado`, `confactura`) VALUES
+(73, '2025-01-27', 595.00, 'tokenSIM', 2, 5, 1);
 
 -- --------------------------------------------------------
 
@@ -851,6 +999,12 @@ ALTER TABLE `categoria`
 ALTER TABLE `cliente`
   ADD PRIMARY KEY (`id`),
   ADD KEY `FK_0889ef3595b17ad5eeb6b7cf908` (`id_persona`);
+
+--
+-- Indexes for table `color`
+--
+ALTER TABLE `color`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `combo`
@@ -941,7 +1095,8 @@ ALTER TABLE `producto`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `IDX_330f84bc5b342017cb02d3b813` (`codigoProducto`),
   ADD KEY `FK_594d83bcc50933f539fc7280561` (`id_proveedor`),
-  ADD KEY `FK_e87a319f3da1b6da5fedd1988be` (`id_categoria`);
+  ADD KEY `FK_e87a319f3da1b6da5fedd1988be` (`id_categoria`),
+  ADD KEY `FK_853dd0bfbe7c5d10cbc0447a2f8` (`id_color`);
 
 --
 -- Indexes for table `proveedor`
@@ -989,7 +1144,7 @@ ALTER TABLE `venta_combo`
 -- AUTO_INCREMENT for table `almacen`
 --
 ALTER TABLE `almacen`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `categoria`
@@ -1001,7 +1156,13 @@ ALTER TABLE `categoria`
 -- AUTO_INCREMENT for table `cliente`
 --
 ALTER TABLE `cliente`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `color`
+--
+ALTER TABLE `color`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `combo`
@@ -1019,37 +1180,37 @@ ALTER TABLE `combo_producto`
 -- AUTO_INCREMENT for table `compra`
 --
 ALTER TABLE `compra`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=115;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=202;
 
 --
 -- AUTO_INCREMENT for table `detalle_compra`
 --
 ALTER TABLE `detalle_compra`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=133;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=219;
 
 --
 -- AUTO_INCREMENT for table `detalle_venta`
 --
 ALTER TABLE `detalle_venta`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
 
 --
 -- AUTO_INCREMENT for table `empleado`
 --
 ALTER TABLE `empleado`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `inventario`
 --
 ALTER TABLE `inventario`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
 
 --
 -- AUTO_INCREMENT for table `lote_producto`
 --
 ALTER TABLE `lote_producto`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=88;
 
 --
 -- AUTO_INCREMENT for table `materiales_servicio`
@@ -1067,19 +1228,19 @@ ALTER TABLE `orden_servicio`
 -- AUTO_INCREMENT for table `persona`
 --
 ALTER TABLE `persona`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `producto`
 --
 ALTER TABLE `producto`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `proveedor`
 --
 ALTER TABLE `proveedor`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `servicio`
@@ -1091,13 +1252,13 @@ ALTER TABLE `servicio`
 -- AUTO_INCREMENT for table `usuario`
 --
 ALTER TABLE `usuario`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `venta`
 --
 ALTER TABLE `venta`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
 
 --
 -- AUTO_INCREMENT for table `venta_combo`
@@ -1180,6 +1341,7 @@ ALTER TABLE `orden_servicio`
 --
 ALTER TABLE `producto`
   ADD CONSTRAINT `FK_594d83bcc50933f539fc7280561` FOREIGN KEY (`id_proveedor`) REFERENCES `proveedor` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `FK_853dd0bfbe7c5d10cbc0447a2f8` FOREIGN KEY (`id_color`) REFERENCES `color` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `FK_e87a319f3da1b6da5fedd1988be` FOREIGN KEY (`id_categoria`) REFERENCES `categoria` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
