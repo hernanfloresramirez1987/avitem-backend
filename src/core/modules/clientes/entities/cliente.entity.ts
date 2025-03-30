@@ -14,9 +14,6 @@ import { OrdenServicios } from '../../orden_servicios/entities/orden_servicio.en
     nit: number | null;
   
     @Column({ type: 'tinyint', width: 1, nullable: false })
-    typeCnFact: boolean;
-  
-    @Column({ type: 'tinyint', width: 1, nullable: false })
     state: boolean;
   
     @ManyToOne(() => Personas, { nullable: true, onDelete: 'SET NULL' })
