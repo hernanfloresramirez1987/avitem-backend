@@ -30,7 +30,7 @@ import { Ventas } from 'src/core/modules/ventas/entities/venta.entity';
           inject: [ConfigService],
           useFactory: (configService: ConfigService) => ({
             type: 'mysql',
-            host: process.env.DB_HOST || 'localhost',
+            host: process.env.DB_HOST || 'buobufoojbah6jeai3u3-mysql.services.clever-cloud.com',
             port: parseInt(process.env.DB_PORT || '3306'), // Convert port to number
             username: process.env.DB_USERNAME || 'root',
             password: process.env.DB_PASSWORD || '',
