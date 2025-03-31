@@ -30,11 +30,11 @@ import { Ventas } from 'src/core/modules/ventas/entities/venta.entity';
           inject: [ConfigService],
           useFactory: (configService: ConfigService) => ({
             type: 'mysql',
-            host: configService.getOrThrow('DB_HOST'),
-            port: configService.getOrThrow('DB_PORT'),
-            username: configService.getOrThrow('DB_USERNAME'),
-            password: configService.getOrThrow('DB_PASSWORD'),
-            database: configService.getOrThrow('DB_NAME'),
+            host: process.env.DB_HOST || '',
+            port: parseInt(process.env.DB_PORT || '3306'), // Convert port to number
+            username: process.env.DB_USERNAME || '',
+            password: process.env.DB_PASSWORD || '',
+            database: process.env.DB_NAME || '',
             // entities: [__dirname + '/../../core/models/**/*.entity{.ts,.js}'],
             entities: [
               Personas,
