@@ -60,7 +60,7 @@ import { Ventas } from 'src/core/modules/ventas/entities/venta.entity';
               MaterialServicios,
               Colores
             ],
-            synchronize: configService.getOrThrow('DB_SYNCRONIZE') === 'true',
+            synchronize: process.env.DB_SYNCRONIZE === 'true',
           }),
           
         }),
