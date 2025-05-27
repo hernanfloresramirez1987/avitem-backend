@@ -30,11 +30,11 @@ import { Ventas } from 'src/core/modules/ventas/entities/venta.entity';
           inject: [ConfigService],
           useFactory: (configService: ConfigService) => ({
             type: 'mysql',
-            host: '192.168.0.151', //configService.getOrThrow('DB_HOST'),
-            port: 3306, //configService.getOrThrow('DB_PORT'),
-            username: 'root', //configService.getOrThrow('DB_USERNAME'),
-            password: '', //configService.getOrThrow('DB_PASSWORD'),
-            database: 'avitem_prueba', //configService.getOrThrow('DB_NAME'),
+            host: process.env.DB_HOST || 'buobufoojbah6jeai3u3-mysql.services.clever-cloud.com',
+            port: parseInt(process.env.DB_PORT || '3306'), // Convert port to number
+            username: process.env.DB_USERNAME || 'u2cys4powrhbhuat',
+            password: process.env.DB_PASSWORD || 'dIKNO5Gn29vg4hluCaSR',
+            database: process.env.DB_NAME || 'buobufoojbah6jeai3u3',
             // entities: [__dirname + '/../../core/models/**/*.entity{.ts,.js}'],
             entities: [
               Personas,
@@ -60,7 +60,7 @@ import { Ventas } from 'src/core/modules/ventas/entities/venta.entity';
               MaterialServicios,
               Colores
             ],
-            synchronize: true, //configService.getOrThrow('DB_SYNCRONIZE') === 'true',
+            synchronize: process.env.DB_SYNCRONIZE === 'true',
           }),
           
         }),

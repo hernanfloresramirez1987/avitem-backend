@@ -12,7 +12,7 @@ export class Personas extends BaseEntity {
     @Column({ type: 'varchar', length: 2, nullable: false })
     ciExpedit: string;
 
-    @Column({ type: 'int', width: 5, nullable: false })
+    @Column({ type: 'varchar', length: 5, nullable: false })
     ciComplement: string;
 
     @Column({ type: 'varchar', length: 100, nullable: true })

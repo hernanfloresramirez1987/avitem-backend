@@ -12,6 +12,11 @@ export class ClientesController {
     return this.clientesService.create(createClienteDto);
   }
 
+  @Post('register')
+  saveEmp(@Body() createClientDto: any) {
+    return this.clientesService.saveCliente(createClientDto);
+  }
+
   @Get()
   findAll() {
     return this.clientesService.findAll();
