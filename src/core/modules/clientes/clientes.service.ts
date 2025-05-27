@@ -18,6 +18,31 @@ export class ClientesService {
     return 'This action adds a new cliente';
   }
 
+  async saveCliente(userObject: any): Promise<any> {
+    console.log('console.log(userObject); : \n', userObject);
+
+    const values = Object.values(userObject)
+      .map((value) => (typeof value === 'string' ? `'${value}'` : value))
+      .join(',');
+
+    // Procedimiento almacenado con los valores
+    const procedureStore = `CALL registro_persona_cliente(${values}, @resultado, @status);`;
+    
+    try {
+      // Ejecutar la consulta en la base de datos
+      const execQuery = await this.connection.query(procedureStore);
+
+      // Recuperar los valores de los parámetros de salida
+      const result = await this.connection.query('SELECT @resultado AS Mensaje, @status AS CodigoEstado;');
+
+      // Devuelvo los resultados, con el mensaje y el código de estado
+      return result[0];  // Esto devuelve { Mensaje: 'Resultado', CodigoEstado: valor }
+    } catch (error) {
+      console.error('Error al ejecutar el procedimiento: ', error);
+      throw new Error('Error al guardar el proveedor');
+    }
+  }
+
   async findAll() {
     // const cliente_ = await this.clienteRepository.find(); 
     const clientes = await this.clienteRepository.find({ // where: { proveedor: { id: idProveedor } },
