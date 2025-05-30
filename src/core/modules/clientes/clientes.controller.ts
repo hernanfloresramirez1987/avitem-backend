@@ -17,10 +17,15 @@ export class ClientesController {
     return this.clientesService.saveCliente(createClientDto);
   }
 
-  @Get()
+  @Post('list')
   findAll() {
     return this.clientesService.findAll();
   }
+  
+  // @Get()
+  // findAll() {
+  //   return this.clientesService.findAll();
+  // }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
