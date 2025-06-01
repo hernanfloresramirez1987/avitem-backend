@@ -12,7 +12,13 @@ async function bootstrap() {
   
   app.use(morgan('combined'));
 
-  app.enableCors(CORS)
+  app.enableCors({
+    origin: '*', // Cualquier origen
+    methods: 'GET,POST,PUT,DELETE,OPTIONS',
+    allowedHeaders: '*',
+  });
+
+  // app.enableCors(CORS)
   
   app.useLogger(app.get(Logger));
 
