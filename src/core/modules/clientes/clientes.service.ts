@@ -44,20 +44,26 @@ export class ClientesService {
   }
 
   async findAll() {
-    // const cliente_ = await this.clienteRepository.find(); 
-    const clientes = await this.clienteRepository.find({ // where: { proveedor: { id: idProveedor } },
-      relations: ['persona'] 
-    });
-    const result = clientes.map(t => ({
-        id: t.id,
-        nombre: t.persona.nombre,
-        app: t.persona.app,
-        apm: t.persona.apm,
-        direccion: t.persona.direccion,
-        nit: t.nit,
-        sexo: t.persona.sexo
-      })
-    );
+    console.log('findAll : \n');
+    const clients = await this.clienteRepository.find({ relations: ['persona'] });
+    
+    // Formatea los datos según lo solicitado:
+    const result = clients.map(cli => ({
+      id: cli.id,
+      ci: cli.persona.ci,
+      ciExpedit: cli.persona.ciExpedit,
+      nombre: cli.persona.nombre,
+      app: cli.persona.app,
+      apm: cli.persona.apm,
+      sexo: cli.persona.sexo,
+      fnaci: cli.persona.fnaci,
+      direccion: cli.persona.direccion,
+      telenofo: cli.persona.telefono,
+      email: cli.persona.email,
+    }));
+  
+    console.log('result : \n', result);
+
     return result;
   }
 
