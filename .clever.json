@@ -3,8 +3,8 @@
     {
       "app_id": "app_a3d1e97c-1324-4925-805e-0ce8c6ab4632",
       "org_id": "user_769863bf-2c19-4a35-96d8-a14274e76af1",
-      "deploy_url": "https://push-n3-par-clevercloud-customers.services.clever-cloud.com/app_a3d1e97c-1324-4925-805e-0ce8c6ab4632.git",
-      "git_ssh_url": "git+ssh://git@push-n3-par-clevercloud-customers.services.clever-cloud.com/app_a3d1e97c-1324-4925-805e-0ce8c6ab4632.git",
+      "deploy_url": "https://github.com/hernanfloresramirez1987/avitem-backend.git",
+      "git_ssh_url": "https://github.com/hernanfloresramirez1987/avitem-backend.git",
       "name": "avitem-backend",
       "alias": "avitem-backend"
     }
