@@ -18,7 +18,7 @@ async function bootstrap() {
     allowedHeaders: '*',
   });
 
-  // app.enableCors(CORS)
+  app.enableCors(CORS)
   
   app.useLogger(app.get(Logger));
 
