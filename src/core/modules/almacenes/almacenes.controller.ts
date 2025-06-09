@@ -17,6 +17,11 @@ export class AlmacenesController {
     return this.almacenesService.findAll();
   }
 
+  @Post('all_filter')
+  findAllFilter(@Body() filter: any) {
+    return this.almacenesService.findAllFilter(filter);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.almacenesService.findOne(+id);

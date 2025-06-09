@@ -17,6 +17,11 @@ export class InventariosController {
     return this.inventariosService.findAll();
   }
 
+  @Post('all_filter')
+  findAllFilter(@Body() filter: any) {
+    return this.inventariosService.findAllFilter(filter);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.inventariosService.findOne(+id);

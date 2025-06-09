@@ -30,11 +30,11 @@ import { Ventas } from 'src/core/modules/ventas/entities/venta.entity';
           inject: [ConfigService],
           useFactory: (configService: ConfigService) => ({
             type: 'mysql',
-            host: process.env.DB_HOST || 'buobufoojbah6jeai3u3-mysql.services.clever-cloud.com',
-            port: parseInt(process.env.DB_PORT || '3306'), // Convert port to number
-            username: process.env.DB_USERNAME || 'u2cys4powrhbhuat',
-            password: process.env.DB_PASSWORD || 'dIKNO5Gn29vg4hluCaSR',
-            database: process.env.DB_NAME || 'buobufoojbah6jeai3u3',
+            host: process.env.DB_HOST,
+            port: parseInt(process.env.DB_PORT), // Convert port to number
+            username: process.env.DB_USERNAME,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_NAME,
             // entities: [__dirname + '/../../core/models/**/*.entity{.ts,.js}'],
             entities: [
               Personas,
@@ -66,4 +66,8 @@ import { Ventas } from 'src/core/modules/ventas/entities/venta.entity';
         }),
       ],
     })
-export class DatabaseModule {}
+export class DatabaseModule {
+  constructor() {
+    console.log(process.env.DB_HOST)
+  }
+}

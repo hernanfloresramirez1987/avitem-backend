@@ -2,20 +2,10 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
-import { Proveedores } from '../proveedores/entities/proveedore.entity';
-import { ProveedorRepository } from 'src/core/shared/repositories/ProveedorRep';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Connection } from 'typeorm';
 
 @Controller('usuarios')
 export class UsuariosController {
-  // constructor(private readonly usuariosService: UsuariosService) {}
-  constructor(
-    @InjectRepository(Proveedores)
-    private readonly empleadosRepository: ProveedorRepository,
-    private readonly usuariosService: UsuariosService,
-    private readonly connection: Connection
-  ) {}
+  constructor(private readonly usuariosService: UsuariosService) {}
 
   @Post()
   create(@Body() createUsuarioDto: CreateUsuarioDto) {
