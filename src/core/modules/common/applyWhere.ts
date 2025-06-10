@@ -1,49 +1,43 @@
 import { MatchModel } from 'src/core/models/core.MatchModel';
 import { Repository } from 'typeorm';
 
-export async function applyWhere(
-  matchModel: MatchModel,
-  campo: string,
-  repository: Repository<any>
-): Promise<any[]> {
-  let queryBuilder = repository.createQueryBuilder();
+type FilterCondition = {
+    value: any;
+    matchMode: string;
+};
+type Filter = {
+    [field: string]: FilterCondition;
+};
 
-  if (matchModel.value != null && matchModel.value !== '') {
-    let operator = '';
-    let value = matchModel.value;
+import { Like, LessThanOrEqual, MoreThanOrEqual, Not, In } from 'typeorm';
 
-    switch (matchModel.matchMode) {
-      case 'lte':
-        operator = '<=';
-        break;
-      case 'gte':
-        operator = '>=';
-        break;
-      case 'contains':
-        operator = 'LIKE';
-        value = `%${value}%`; // SQL LIKE syntax
-        break;
-      case 'notEquals':
-        operator = '!=';
-        break;
-      case 'isNot':
-        operator = 'IS NOT';
-        break;
-      case 'in':
-        if (Array.isArray(value) && value.length > 0) {
-          operator = 'IN';
-          queryBuilder.where(`${campo} ${operator} (:...value)`, { value });
-          return queryBuilder.getMany();
-        }
-        operator = '=';
-        break;
-      default:
-        operator = '=';
-        break;
+export async function applyWhere(filter: Filter, repository: Repository<any>): Promise<any> {
+  const where: any = {};
+
+  for (const [field, condition] of Object.entries(filter)) {
+    if (condition && condition.value != null && condition.value !== '') {
+      switch (condition.matchMode) {
+        case 'lte':
+          where[field] = LessThanOrEqual(condition.value);
+          break;
+        case 'gte':
+          where[field] = MoreThanOrEqual(condition.value);
+          break;
+        case 'contains':
+          where[field] = Like(`%${condition.value}%`);
+          break;
+        case 'notEquals':
+          where[field] = Not(condition.value);
+          break;
+        case 'in':
+          where[field] = In(condition.value);
+          break;
+        default:
+          where[field] = condition.value;
+          break;
+      }
     }
-
-    queryBuilder.where(`${campo} ${operator} :value`, { value });
   }
 
-  return queryBuilder.getMany();
+  return where;
 }
