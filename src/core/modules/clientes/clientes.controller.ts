@@ -18,14 +18,14 @@ export class ClientesController {
   }
 
   @Post('list')
+  findAllFilter(@Body() filter: any) {
+    return this.clientesService.findAll
+  }
+
+  @Get()
   findAll() {
     return this.clientesService.findAll();
   }
-  
-  // @Get()
-  // findAll() {
-  //   return this.clientesService.findAll();
-  // }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
