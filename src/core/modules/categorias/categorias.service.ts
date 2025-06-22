@@ -3,15 +3,14 @@ import { CreateCategoriaDto } from './dto/create-categoria.dto';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Categorias } from './entities/categoria.entity';
-import { CategoriaRepository } from 'src/core/shared/repositories/CategoriaRep';
-import { Connection } from 'typeorm';
+import { Connection, Repository } from 'typeorm';
 
 @Injectable()
 export class CategoriasService {
 
   constructor(
     @InjectRepository(Categorias)
-    private readonly categoriaRepository: CategoriaRepository,
+    private readonly categoriaRepository: Repository<Categorias>,
     private readonly connection: Connection
   ) {}
 

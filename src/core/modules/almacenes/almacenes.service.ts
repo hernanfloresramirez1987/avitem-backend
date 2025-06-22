@@ -3,14 +3,13 @@ import { CreateAlmaceneDto } from './dto/create-almacene.dto';
 import { UpdateAlmaceneDto } from './dto/update-almacene.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Almacenes } from './entities/almacene.entity';
-import { AlmacenRepository } from 'src/core/shared/repositories/AlmacenRep';
-import { Connection, Like } from 'typeorm';
+import { Connection, Like, Repository } from 'typeorm';
 
 @Injectable()
 export class AlmacenesService {
   constructor(
     @InjectRepository(Almacenes)
-    private almacenRepository: AlmacenRepository,
+    private almacenRepository: Repository<Almacenes>,
     private readonly connection: Connection
   ) {}
 
