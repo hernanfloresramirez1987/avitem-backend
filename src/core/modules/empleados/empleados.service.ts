@@ -3,16 +3,15 @@ import { CreateEmpleadoDto } from './dto/create-empleado.dto';
 import { UpdateEmpleadoDto } from './dto/update-empleado.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Empleados } from './entities/empleado.entity';
-import { EmpleadoRepository } from 'src/core/shared/repositories/EmpleadoRep';
 import { hash } from 'bcrypt';
-import { Connection } from 'typeorm';
+import { Connection, Repository } from 'typeorm';
 
 @Injectable()
 export class EmpleadosService {
 
   constructor(
     @InjectRepository(Empleados)
-    private readonly empleadosRepository: EmpleadoRepository,
+    private readonly empleadosRepository: Repository<Empleados>,
     private readonly connection: Connection
   ) {}
 

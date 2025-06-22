@@ -1,18 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { CreateInventarioDto } from './dto/create-inventario.dto';
 import { UpdateInventarioDto } from './dto/update-inventario.dto';
-import { Connection, Like } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Inventarios } from './entities/inventario.entity';
-import { InventarioRepository } from 'src/core/shared/repositories/inventarioRep';
 import { applyWhere } from '../common/applyWhere';
 
 @Injectable()
 export class InventariosService {
   constructor(
     @InjectRepository(Inventarios)
-    private inventarioRepository: InventarioRepository,
-    private readonly connection: Connection
+    private inventarioRepository: Repository<Inventarios>
   ) {}
   
 
@@ -29,25 +27,19 @@ export class InventariosService {
     const rows = filter.rows ? parseInt(filter.rows) : 10;
     const skip = (page - 1) * rows;
 
-    // Aplica filtros
     console.log("Filter:    ", filter);
-    const whereConditions = await applyWhere(filter.filter, this.inventarioRepository);
+    const whereConditions = await applyWhere(filter.filter, this.inventarioRepository); // Aplica filtros
 
-    // Total sin paginar
-    const total_records = await this.inventarioRepository.count({
+    const total_records = await this.inventarioRepository.count({ // Total sin paginar
       where: whereConditions,
     });
 
-    console.log("Where Conditions:    ", total_records);
-
-    // const data = await this.inventarioRepository.find({ relations: ['producto', 'almacen'] });
-
-    // const data = await this.inventarioRepository.find({
-    //   where: whereConditions,
-    //   relations: ['producto', 'almacen']
-    // });
-
-    const queryBuilder = this.inventarioRepository.createQueryBuilder('inventario');
+    const queryBuilder = this.inventarioRepository.createQueryBuilder('inventario')
+      .innerJoinAndSelect('inventario.producto', 'producto')
+      .innerJoinAndSelect('inventario.almacen', 'almacen')
+      // .innerJoinAndSelect('producto.ventas', 'ventas')
+      // .innerJoinAndSelect('producto.compras', 'compras')
+      // .innerJoinAndSelect('producto.lote_producto', 'lote_producto');
     queryBuilder.where(whereConditions);
 
     console.log("SQL Generado:", queryBuilder.getSql()); // Muestra la SQL final
@@ -59,9 +51,17 @@ export class InventariosService {
       totalDisponible: item.cantidadStock - item.cantidadReservada,
       nombreProducto: item.producto?.nombre,
       nombreAlmacen: item.almacen?.nombre,
+      cantidadStock: item.cantidadStock,
+      cantidadReservada: item.cantidadReservada,
+      cantidadDespachada: item.cantidadDespachada,
+      fechaInventario: item.fechaInventario,  
+      fechaIngreso: item.fechaIngreso,
+      fechaSalida: item.fechaSalida,
+      idProducto: item.producto?.id,
+      idAlmacen: item.almacen?.id,
     }));
   
-    console.log("Result:............................    ", data);
+    console.log("Result:............................    ", resultado[0]);
   
     return {
       data: resultado,

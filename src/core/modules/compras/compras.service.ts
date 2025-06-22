@@ -3,14 +3,13 @@ import { CreateCompraDto } from './dto/create-compra.dto';
 import { UpdateCompraDto } from './dto/update-compra.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Compras } from './entities/compra.entity';
-import { CompraRepository } from 'src/core/shared/repositories/CompraRep';
-import { Connection } from 'typeorm';
+import { Connection, Repository } from 'typeorm';
 
 @Injectable()
 export class ComprasService {
   constructor(
     @InjectRepository(Compras)
-    private comprasRepository: CompraRepository,
+    private comprasRepository: Repository<Compras>,
     private readonly connection: Connection
   ) {}
 

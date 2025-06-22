@@ -19,7 +19,7 @@ export class ClientesController {
 
   @Post('list')
   findAllFilter(@Body() filter: any) {
-    return this.clientesService.findAll
+    return this.clientesService.findAll();
   }
 
   @Get()

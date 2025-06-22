@@ -3,17 +3,17 @@ import { CreateVentaDto } from './dto/create-venta.dto';
 import { UpdateVentaDto } from './dto/update-venta.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Ventas } from './entities/venta.entity';
-import { VentaRepository } from 'src/core/shared/repositories/VentaRep';
-import { Connection } from 'typeorm';
+import { Connection, Repository } from 'typeorm';
 
 @Injectable()
 export class VentasService {
   constructor(
     @InjectRepository(Ventas)
-    private ventasRepository: VentaRepository,
+    private ventasRepository: Repository<Ventas>,
     private readonly connection: Connection
   ) {}
   create(createVentaDto: CreateVentaDto) {
+    console.log(createVentaDto);
     return 'This action adds a new venta';
   }
 

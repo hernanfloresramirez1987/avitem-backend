@@ -3,16 +3,15 @@ import { CreateProveedoreDto } from './dto/create-proveedore.dto';
 import { UpdateProveedoreDto } from './dto/update-proveedore.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Proveedores } from './entities/proveedore.entity';
-import { ProveedorRepository } from 'src/core/shared/repositories/ProveedorRep';
 import { hash } from 'bcrypt';
-import { Connection } from 'typeorm';
+import { Connection, Repository } from 'typeorm';
 
 @Injectable()
 export class ProveedoresService {
 
   constructor(
     @InjectRepository(Proveedores)
-    private readonly proveedoresRepository: ProveedorRepository,
+    private readonly proveedoresRepository: Repository<Proveedores>,
     private readonly connection: Connection
   ) {}
 

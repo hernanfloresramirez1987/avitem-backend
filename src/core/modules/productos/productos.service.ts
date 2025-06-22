@@ -3,14 +3,13 @@ import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Productos } from './entities/producto.entity';
-import { ProductoRepository } from 'src/core/shared/repositories/ProductoRep';
-import { Connection } from 'typeorm';
+import { Connection, Repository } from 'typeorm';
 
 @Injectable()
 export class ProductosService {
   constructor(
     @InjectRepository(Productos)
-    private personaRepository: ProductoRepository,
+    private personaRepository: Repository<Productos>,
     private readonly connection: Connection
   ) {}
   

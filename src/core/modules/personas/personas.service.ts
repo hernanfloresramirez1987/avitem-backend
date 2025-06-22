@@ -3,13 +3,13 @@ import { CreatePersonaDto } from './dto/create-persona.dto';
 import { UpdatePersonaDto } from './dto/update-persona.dto';
 import { Personas } from './entities/persona.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PersonaRepository } from '../../shared/repositories/PersonaRep';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class PersonasService {
   constructor(
     @InjectRepository(Personas)
-    private personaRepository: PersonaRepository,
+    private personaRepository: Repository<Personas>,
   ) {}
   create(createPersonaDto: CreatePersonaDto) {
     return 'This action adds a new persona';
