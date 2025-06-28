@@ -17,7 +17,7 @@ export class AlmacenesController {
     return this.almacenesService.findAll();
   }
 
-  @Post('all_filter')
+  @Post('list')
   findAllFilter(@Body() filter: any) {
     return this.almacenesService.findAllFilter(filter);
   }

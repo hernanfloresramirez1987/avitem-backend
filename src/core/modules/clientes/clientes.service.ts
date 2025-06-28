@@ -26,7 +26,7 @@ export class ClientesService {
 
     // Procedimiento almacenado con los valores
     const procedureStore = `CALL registro_persona_cliente(${values}, @resultado, @status);`;
-    
+
     try {
       // Ejecutar la consulta en la base de datos
       const execQuery = await this.connection.query(procedureStore);
@@ -40,6 +40,16 @@ export class ClientesService {
       console.error('Error al ejecutar el procedimiento: ', error);
       throw new Error('Error al guardar el proveedor');
     }
+  }
+
+  async findOneCI(ci: number) {
+    const query = await this.clienteRepository.findOne({ where: { ci } });
+    console.log(ci);
+    return {
+      success: true,
+      message: query ? 'Cliente encontrado' : 'Cliente no encontrado',
+      data: query,
+    };
   }
 
   async findAll() {

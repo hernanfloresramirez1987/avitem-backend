@@ -18,9 +18,14 @@ export class PersonasService {
   async getAll(): Promise<Personas[]> {
     return await this.personaRepository.find();
   }
-  
+
   async findOneCI(cidto: number) {
-    return await this.personaRepository.find({ where: { ci: cidto.toString() } });
+    const query = await this.personaRepository.findOne({ where: { ci: cidto.toString() } });
+    return {
+      success: true,
+      message: query ? 'Cliente encontrado' : 'Cliente no encontrado',
+      data: query
+    }
   }
 
   findOne(id: number) {

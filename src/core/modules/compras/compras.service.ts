@@ -25,16 +25,14 @@ export class ComprasService {
       .join(',');
 
     // Procedimiento almacenado con los valores
-    const procedureStore = `CALL registro_Compra_y_Detalle_mas_Lote_update_Product(${values}, @resultado, @status);`;
+    const procedureStore = `CALL registro_Compra_y_Detalle_mas_Lote_update_Product(${values}, @resultado, @status, @id_compra);`; //console.log("CALL registro_Compra_y_Detalle_mas_Lote_update_Product($: \n", procedureStore, "\n\n");
 
-    console.log("CALL registro_Compra_y_Detalle_mas_Lote_update_Product($: \n", procedureStore, "\n\n");
-    
     try {
       // Ejecutar la consulta en la base de datos
       const execQuery = await this.connection.query(procedureStore);
 
       // Recuperar los valores de los parámetros de salida
-      const result = await this.connection.query('SELECT @resultado AS Mensaje, @status AS CodigoEstado;');
+      const result = await this.connection.query('SELECT @resultado AS Mensaje, @status AS CodigoEstado, @id_compra as id;');
 
       // Devuelvo los resultados, con el mensaje y el código de estado
       return result[0];  // Esto devuelve { Mensaje: 'Resultado', CodigoEstado: valor }
@@ -61,8 +59,24 @@ export class ComprasService {
     return result;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} compra`;
+  async findOne(id: number) {
+    const compras = await this.comprasRepository.find({
+      where: {
+        id: id,
+      },
+      relations: ['proveedor']
+    });
+    
+    const result = compras.map(compras => ({
+      id: compras.id,
+      fechaCompra: compras.fechaCompra,
+      total: compras.total,
+      proveedor: compras.proveedor.empresa
+    }));
+
+    console.log('Linea 60.- \n', result);
+  
+    return result;
   }
 
   update(id: number, updateCompraDto: UpdateCompraDto) {
