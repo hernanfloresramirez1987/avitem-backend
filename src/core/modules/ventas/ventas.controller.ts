@@ -22,6 +22,11 @@ export class VentasController {
     return this.ventasService.findAll();
   }
 
+  @Post('all_filter')
+  findAllFilter(@Body() filter: any) {
+    return this.ventasService.findAllFilter(filter);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.ventasService.findOne(+id);

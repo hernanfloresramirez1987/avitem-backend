@@ -4,6 +4,7 @@ import { UpdateCompraDto } from './dto/update-compra.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Compras } from './entities/compra.entity';
 import { Connection, Repository } from 'typeorm';
+import { applyWhere } from '../common/applyWhere';
 
 @Injectable()
 export class ComprasService {
@@ -57,6 +58,31 @@ export class ComprasService {
     console.log('Linea 60.- \n', result);
 
     return result;
+  }
+  async findAllFilter(filter: any) {
+    const page = filter.page ? parseInt(filter.page) : 1;
+    const rows = filter.rows ? parseInt(filter.rows) : 10;
+    const skip = (page - 1) * rows;
+    const whereConditions = await applyWhere(filter.filter, this.comprasRepository);
+    const total_records = await this.comprasRepository.count({ // Total sin paginar
+      where: whereConditions,
+    });
+    const queryBuilder = this.comprasRepository.createQueryBuilder('compras')
+      .innerJoinAndSelect('compras.proveedor', 'proveedor')
+      .innerJoinAndSelect('proveedor.persona', 'persona');
+    queryBuilder.where(whereConditions);
+    const data = await queryBuilder.getMany();
+    const resultado = data.map((item) => ({
+      ...item,
+    }));
+    return {
+      data: resultado,
+      metadata: {
+        page: page,
+        rows: data.length,
+        total_records: total_records,
+      },
+    };
   }
 
   async findOne(id: number) {

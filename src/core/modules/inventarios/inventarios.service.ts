@@ -26,26 +26,15 @@ export class InventariosService {
     const page = filter.page ? parseInt(filter.page) : 1;
     const rows = filter.rows ? parseInt(filter.rows) : 10;
     const skip = (page - 1) * rows;
-
-    console.log("Filter:    ", filter);
-    const whereConditions = await applyWhere(filter.filter, this.inventarioRepository); // Aplica filtros
-
+    const whereConditions = await applyWhere(filter.filter, this.inventarioRepository);
     const total_records = await this.inventarioRepository.count({ // Total sin paginar
       where: whereConditions,
     });
-
     const queryBuilder = this.inventarioRepository.createQueryBuilder('inventario')
       .innerJoinAndSelect('inventario.producto', 'producto')
-      .innerJoinAndSelect('inventario.almacen', 'almacen')
-      // .innerJoinAndSelect('producto.ventas', 'ventas')
-      // .innerJoinAndSelect('producto.compras', 'compras')
-      // .innerJoinAndSelect('producto.lote_producto', 'lote_producto');
+      .innerJoinAndSelect('inventario.almacen', 'almacen');
     queryBuilder.where(whereConditions);
-
-    console.log("SQL Generado:", queryBuilder.getSql()); // Muestra la SQL final
-
     const data = await queryBuilder.getMany();
-  
     const resultado = data.map((item) => ({
       ...item,
       totalDisponible: item.cantidadStock - item.cantidadReservada,
@@ -54,22 +43,22 @@ export class InventariosService {
       cantidadStock: item.cantidadStock,
       cantidadReservada: item.cantidadReservada,
       cantidadDespachada: item.cantidadDespachada,
-      fechaInventario: item.fechaInventario,  
+      fechaInventario: item.fechaInventario,
       fechaIngreso: item.fechaIngreso,
       fechaSalida: item.fechaSalida,
       idProducto: item.producto?.id,
       idAlmacen: item.almacen?.id,
     }));
-  
+
     console.log("Result:............................    ", resultado[0]);
-  
+
     return {
       data: resultado,
       metadata: {
         page: page,
         rows: data.length,
         total_records: total_records,
-      }
+      },
     };
   }
 

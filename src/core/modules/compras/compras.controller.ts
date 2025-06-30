@@ -22,6 +22,11 @@ export class ComprasController {
     return this.comprasService.findAll();
   }
 
+  @Post('all_filter')
+  findAllFilter(@Body() filter: any) {
+    return this.comprasService.findAllFilter(filter);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.comprasService.findOne(+id);
