@@ -9,7 +9,7 @@ import { Connection, Repository } from 'typeorm';
 export class VentasService {
   constructor(
     @InjectRepository(Ventas)
-    private ventasRepository: Repository<Ventas>,
+    private readonly ventasRepository: Repository<Ventas>,
     private readonly connection: Connection
   ) {}
   create(createVentaDto: CreateVentaDto) {
@@ -25,15 +25,15 @@ export class VentasService {
       .join(',');
 
     // Procedimiento almacenado con los valores
-    const procedureStore = `CALL registrar_venta_y_descuento(${values}, @resultado, @status);`;
+    const procedureStore = `CALL registrar_venta_y_descuento(${values}, @resultado, @status, @id_venta);`;
 
     console.log("CALL registrar_venta_y_descuento($: \n", procedureStore, "\n\n");
-    
+
     try { // Ejecutar la consulta en la base de datos
       const execQuery = await this.connection.query(procedureStore);
 
       // Recuperar los valores de los parámetros de salida
-      const result = await this.connection.query('SELECT @resultado AS Mensaje, @status AS CodigoEstado;');
+      const result = await this.connection.query('SELECT @resultado AS Mensaje, @status AS CodigoEstado, @id_venta as id;');
 
       // Devuelvo los resultados, con el mensaje y el código de estado
       return result[0];  // Esto devuelve { Mensaje: 'Resultado', CodigoEstado: valor }
@@ -43,8 +43,21 @@ export class VentasService {
     }
   }
 
-  findAll() {
-    return `This action returns all ventas`;
+  async findAll() {
+    const ventas = await this.ventasRepository.find({
+      relations: ['cliente'],
+    });
+
+    const result = ventas.map(ventas => ({
+      id: ventas.id,
+      fechaventa: ventas.fechaVenta,
+      total: ventas.total,
+      cliente: ventas.cliente,
+    }));
+
+    console.log('Linea 60.- \n', result);
+
+    return result;
   }
 
   findOne(id: number) {

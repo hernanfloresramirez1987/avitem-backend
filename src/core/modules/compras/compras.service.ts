@@ -9,7 +9,7 @@ import { Connection, Repository } from 'typeorm';
 export class ComprasService {
   constructor(
     @InjectRepository(Compras)
-    private comprasRepository: Repository<Compras>,
+    private readonly comprasRepository: Repository<Compras>,
     private readonly connection: Connection
   ) {}
 
@@ -46,7 +46,7 @@ export class ComprasService {
     const compras = await this.comprasRepository.find({
       relations: ['proveedor']
     });
-    
+
     const result = compras.map(compras => ({
       id: compras.id,
       fechaCompra: compras.fechaCompra,
@@ -55,28 +55,30 @@ export class ComprasService {
     }));
 
     console.log('Linea 60.- \n', result);
-  
+
     return result;
   }
 
   async findOne(id: number) {
-    const compras = await this.comprasRepository.find({
-      where: {
-        id: id,
-      },
-      relations: ['proveedor']
-    });
-    
-    const result = compras.map(compras => ({
-      id: compras.id,
-      fechaCompra: compras.fechaCompra,
-      total: compras.total,
-      proveedor: compras.proveedor.empresa
-    }));
+    try {
+      const compra = await this.comprasRepository.findOne({
+        where: { id },
+        relations: ['proveedor', 'detalle_compra'], // incluye relaciones anidadas si necesitas más detalles
+      });
 
-    console.log('Linea 60.- \n', result);
-  
-    return result;
+      if (!compra) {
+        throw new Error(`Compra con ID ${id} no encontrada`);
+      }
+      return {
+        id: compra.id,
+        fechaCompra: compra.fechaCompra,
+        total: compra.total,
+        proveedor: compra.proveedor,
+      };
+    } catch (error) {
+      console.error('Error al buscar la compra:', error.message);
+      throw new Error('No se pudo recuperar la compra');
+    }
   }
 
   update(id: number, updateCompraDto: UpdateCompraDto) {

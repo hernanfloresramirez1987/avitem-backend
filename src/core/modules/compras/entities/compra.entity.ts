@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, BaseEntity } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, BaseEntity, OneToMany } from 'typeorm';
 import { Proveedores } from '../../proveedores/entities/proveedore.entity';
-  
+import { DetalleCompras } from '../../detalle_compras/entities/detalle_compra.entity';
+
 @Entity('compra')
 export class Compras extends BaseEntity {
   @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
@@ -15,4 +16,7 @@ export class Compras extends BaseEntity {
   @ManyToOne(() => Proveedores, (proveedor) => proveedor.id, { nullable: true })
   @JoinColumn({ name: 'id_proveedor' })
   proveedor: Proveedores | null;
+
+  @OneToMany(() => DetalleCompras, detalle => detalle.compra)
+  detalle_compra: DetalleCompras[];
 }
