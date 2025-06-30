@@ -17,6 +17,11 @@ export class DetalleComprasController {
     return this.detalleComprasService.findAll();
   }
 
+  @Get('items/:id')
+  findAllOne(@Param('id') id: string) {
+    return this.detalleComprasService.findAllOne(+id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.detalleComprasService.findOne(+id);
